@@ -39,11 +39,12 @@ func GetUsers(c *gin.Context) {
 			addressResponses = append(addressResponses, addressResponse)
 		}
 
+		roleVal := user.Role
 		userResponse := response.UserResponse{
 			ID:        user.ID,
 			Username:  user.Username,
 			Email:     user.Email,
-			Role:      &user.Role,
+			Role:      &roleVal,
 			Addresses: &addressResponses,
 		}
 		userResponses = append(userResponses, userResponse)

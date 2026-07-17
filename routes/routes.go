@@ -95,7 +95,7 @@ func SetupRoutes(router *gin.Engine) {
 
 	// Serve swagger.json for the API UI
 	router.GET("/swagger.json", func(c *gin.Context) {
-		c.File("swagger.json")
+		c.File("docs/swagger.json")
 	})
 
 	// Serve Swagger UI HTML page
