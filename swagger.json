@@ -1,0 +1,300 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "My Laundry API Documentation",
+    "description": "API Documentation for My Laundry Application. Includes Authentication, User Management, Order Processing, and Service Catalog management.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8085",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "role": { "type": "string", "enum": ["customer", "admin", "courier"] }
+        }
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "time": { "type": "integer", "description": "Processing duration in hours" },
+          "price": { "type": "number" },
+          "category": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new customer account",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "confirm_password"],
+                "properties": {
+                  "username": { "type": "string", "example": "Budi Customer" },
+                  "email": { "type": "string", "example": "customer@mylaundry.com" },
+                  "password": { "type": "string", "example": "password123" },
+                  "confirm_password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully" },
+          "400": { "description": "Invalid input or passwords do not match" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Log in and obtain a JWT token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "admin@mylaundry.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string" },
+                        "role": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/users/": {
+      "get": {
+        "summary": "List all users (Admin Only)",
+        "responses": {
+          "200": { "description": "Successfully retrieved users" },
+          "403": { "description": "Access Forbidden" }
+        }
+      },
+      "post": {
+        "summary": "Create a new user with specific role (Admin Only)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "role"],
+                "properties": {
+                  "username": { "type": "string", "example": "New Courier" },
+                  "email": { "type": "string", "example": "new_courier@mylaundry.com" },
+                  "password": { "type": "string", "example": "password123" },
+                  "role": { "type": "string", "enum": ["admin", "courier", "customer"], "example": "courier" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created successfully" },
+          "400": { "description": "Invalid role or fields" },
+          "403": { "description": "Access Forbidden" }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "summary": "Get user details by ID (Admin Only)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Successfully retrieved user profile" },
+          "404": { "description": "User not found" }
+        }
+      },
+      "put": {
+        "summary": "Update user details (Admin Only)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" },
+                  "role": { "type": "string", "enum": ["admin", "courier", "customer"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User updated successfully" }
+        }
+      },
+      "delete": {
+        "summary": "Delete user by ID (Admin Only)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "User deleted successfully" }
+        }
+      }
+    },
+    "/api/services/": {
+      "get": {
+        "summary": "List all services/products",
+        "security": [],
+        "responses": {
+          "200": { "description": "Successfully retrieved services" }
+        }
+      },
+      "post": {
+        "summary": "Create a new service (Admin Only)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "time", "price", "category"],
+                "properties": {
+                  "title": { "type": "string", "example": "Wash & Fold Express" },
+                  "time": { "type": "integer", "example": 24 },
+                  "price": { "type": "number", "example": 10000 },
+                  "category": { "type": "string", "example": "Kiloan" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Service created successfully" }
+        }
+      }
+    },
+    "/api/services/{id}": {
+      "put": {
+        "summary": "Update service details (Admin Only)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "time": { "type": "integer" },
+                  "price": { "type": "number" },
+                  "category": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Service updated successfully" }
+        }
+      },
+      "delete": {
+        "summary": "Delete service by ID (Admin Only)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Service deleted successfully" }
+        }
+      }
+    },
+    "/api/orders/": {
+      "get": {
+        "summary": "List all orders",
+        "responses": {
+          "200": { "description": "Successfully retrieved orders" }
+        }
+      },
+      "post": {
+        "summary": "Create a new laundry order (Customer Only)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["service_id", "address_id", "weight"],
+                "properties": {
+                  "service_id": { "type": "integer", "example": 1 },
+                  "address_id": { "type": "integer", "example": 1 },
+                  "weight": { "type": "number", "example": 4.5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order created successfully" }
+        }
+      }
+    }
+  }
+}

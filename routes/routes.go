@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/raihansyahrin/backend_laundry_app.git/controllers"
 	admin_controllers "github.com/raihansyahrin/backend_laundry_app.git/controllers/admin"
@@ -90,4 +92,43 @@ func SetupRoutes(router *gin.Engine) {
 		addressRoutes.PUT("/:id", middlewares.AuthMiddleware(), addressController.UpdateAddress)
 		addressRoutes.DELETE("/:id", middlewares.AuthMiddleware(), addressController.DeleteAddress)
 	}
+
+	// Serve swagger.json for the API UI
+	router.GET("/swagger.json", func(c *gin.Context) {
+		c.File("swagger.json")
+	})
+
+	// Serve Swagger UI HTML page
+	router.GET("/swagger", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(`
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="utf-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<title>My Laundry API - Swagger UI</title>
+				<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css" />
+			</head>
+			<body>
+				<div id="swagger-ui"></div>
+				<script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-bundle.js" crossorigin></script>
+				<script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-standalone-preset.js" crossorigin></script>
+				<script>
+					window.onload = () => {
+						window.ui = SwaggerUIBundle({
+							url: '/swagger.json',
+							dom_id: '#swagger-ui',
+							deepLinking: true,
+							presets: [
+								SwaggerUIBundle.presets.apis,
+								SwaggerUIStandalonePreset
+							],
+							layout: "BaseLayout"
+						});
+					};
+				</script>
+			</body>
+			</html>
+		`))
+	})
 }

@@ -29,4 +29,7 @@ func ConnectDatabase() {
 	}
 
 	DB = database
+
+	// Seed database with dummy data
+	SeedDatabase()
 }
