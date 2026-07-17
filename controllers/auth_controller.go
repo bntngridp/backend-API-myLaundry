@@ -49,7 +49,7 @@ func Register(c *gin.Context) {
 		Username: body.Username,
 		Email:    body.Email,
 		Password: string(hash),
-		Role:     body.Role,
+		Role:     "customer", // Always default public registration to customer for security
 	}
 
 	// Save user to database

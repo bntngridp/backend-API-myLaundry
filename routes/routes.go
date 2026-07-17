@@ -17,11 +17,13 @@ func SetupRoutes(router *gin.Engine) {
 	}
 
 	userRoutes := router.Group("api/users")
+	userRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
 	{
-		userRoutes.GET("/", middlewares.AuthMiddleware(), controllers.GetUsers)
-		userRoutes.GET("/:id", middlewares.AuthMiddleware(), controllers.GetUser)
-		userRoutes.PUT("/:id", middlewares.AuthMiddleware(), controllers.UpdateUser)
-		userRoutes.DELETE("/:id", middlewares.AuthMiddleware(), controllers.DeleteUser)
+		userRoutes.GET("/", controllers.GetUsers)
+		userRoutes.GET("/:id", controllers.GetUser)
+		userRoutes.POST("/", controllers.CreateUser)
+		userRoutes.PUT("/:id", controllers.UpdateUser)
+		userRoutes.DELETE("/:id", controllers.DeleteUser)
 	}
 
 	customerGroup := router.Group("api/customers")

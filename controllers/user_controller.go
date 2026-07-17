@@ -122,6 +122,12 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Validate role
+	if body.Role != "" && !isValidRole(body.Role) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid role. Allowed roles are: admin, courier, customer"})
+		return
+	}
+
 	user.Username = body.Username
 	user.Email = body.Email
 	if body.Password != "" {
@@ -132,7 +138,9 @@ func UpdateUser(c *gin.Context) {
 		}
 		user.Password = string(hash)
 	}
-	user.Role = body.Role
+	if body.Role != "" {
+		user.Role = body.Role
+	}
 
 	if err := config.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update user"})
@@ -151,4 +159,74 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+// CreateUser allows an admin to create a user and explicitly set their role
+func CreateUser(c *gin.Context) {
+	var body struct {
+		Username string `json:"username" form:"username"`
+		Email    string `json:"email" form:"email"`
+		Password string `json:"password" form:"password"`
+		Role     string `json:"role" form:"role"`
+	}
+
+	if err := c.ShouldBind(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input format"})
+		return
+	}
+
+	if body.Username == "" || body.Email == "" || body.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Username, email, and password are required"})
+		return
+	}
+
+	// Validate role
+	if body.Role == "" {
+		body.Role = "customer" // Default to customer if not specified
+	} else if !isValidRole(body.Role) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid role. Allowed roles are: admin, courier, customer"})
+		return
+	}
+
+	// Check password length
+	if len(body.Password) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Password must be at least 8 characters long"})
+		return
+	}
+
+	// Hashing the password
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error hashing password"})
+		return
+	}
+
+	// Create user object
+	user := models.User{
+		Username: body.Username,
+		Email:    body.Email,
+		Password: string(hash),
+		Role:     body.Role,
+	}
+
+	// Save user to database
+	if err := config.DB.Create(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"message": "User created successfully",
+		"data": gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+			"role":     user.Role,
+		},
+	})
+}
+
+func isValidRole(role string) bool {
+	return role == "admin" || role == "courier" || role == "customer"
 }
