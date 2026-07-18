@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/raihansyahrin/backend_laundry_app.git/config"
+	"github.com/raihansyahrin/backend_laundry_app.git/middlewares"
 	"github.com/raihansyahrin/backend_laundry_app.git/routes"
 )
 
@@ -18,6 +19,9 @@ func main() {
 
 	// Initialize Gin router
 	r := gin.Default()
+
+	// Apply CORS middleware globally
+	r.Use(middlewares.CORSMiddleware())
 
 	// Connect to database
 	config.ConnectDatabase()
