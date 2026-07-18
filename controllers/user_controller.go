@@ -7,6 +7,7 @@ import (
 	"github.com/raihansyahrin/backend_laundry_app.git/config"
 	"github.com/raihansyahrin/backend_laundry_app.git/models"
 	"github.com/raihansyahrin/backend_laundry_app.git/response"
+	"github.com/raihansyahrin/backend_laundry_app.git/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -132,6 +133,11 @@ func UpdateUser(c *gin.Context) {
 	user.Username = body.Username
 	user.Email = body.Email
 	if body.Password != "" {
+		// Validate password strength
+		if ok, errMsg := utils.ValidatePasswordStrength(body.Password); !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"message": errMsg})
+			return
+		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Error hashing password"})
@@ -189,9 +195,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Check password length
-	if len(body.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Password must be at least 8 characters long"})
+	// Validate password strength
+	if ok, errMsg := utils.ValidatePasswordStrength(body.Password); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": errMsg})
 		return
 	}
 

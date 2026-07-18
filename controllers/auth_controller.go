@@ -25,9 +25,9 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Check password length
-	if len(body.Password) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Password must be at least 8 characters long"})
+	// Validate password strength
+	if ok, errMsg := utils.ValidatePasswordStrength(body.Password); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": errMsg})
 		return
 	}
 
