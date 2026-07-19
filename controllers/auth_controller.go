@@ -167,30 +167,141 @@ func ForgotPassword(c *gin.Context) {
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kode OTP Pemulihan Kata Sandi - myLaundry</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f7fc; color: #1e293b; margin: 0; padding: 20px; }
-        .card { max-width: 480px; margin: 20px auto; background: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-        .logo { text-align: center; margin-bottom: 24px; }
-        .logo img { width: 140px; }
-        h2 { font-size: 22px; font-weight: 700; color: #0f172a; text-align: center; margin-top: 0; margin-bottom: 8px; }
-        p { font-size: 15px; line-height: 1.6; color: #475569; text-align: center; margin: 10px 0; }
-        .otp-code { font-size: 34px; font-weight: 800; letter-spacing: 6px; color: #1e3a8a; text-align: center; margin: 24px 0; padding: 14px; background: #eff6ff; border-radius: 12px; border: 1px dashed #bfdbfe; font-family: monospace; }
-        .footer { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px; line-height: 1.4; }
+        body {
+            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%%;
+            background-color: #f8fafc;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background: linear-gradient(135deg, #0B1739 0%%, #1e293b 100%%);
+            padding: 40px 32px;
+            text-align: center;
+        }
+        .logo {
+            height: 48px;
+            margin-bottom: 8px;
+        }
+        .content {
+            padding: 40px 36px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #475569;
+            margin: 0 0 24px 0;
+        }
+        .otp-box {
+            background-color: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        .otp-code {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: 8px;
+            color: #0d6efd;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+        }
+        .warning-text {
+            font-size: 13px;
+            color: #ef4444;
+            font-weight: 600;
+            margin-bottom: 0;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: inline-block;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 24px 32px;
+            text-align: center;
+            border-top: 1px solid #f1f5f9;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .footer-links {
+            margin-top: 12px;
+        }
+        .footer-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 0 8px;
+        }
+        .footer-links a:hover {
+            color: #0d6efd;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo">
-            <img src="https://raw.githubusercontent.com/bntngridp/admin-myLaundry/main/assets/img/logo-mylaundry.png" alt="myLaundry Logo">
-        </div>
-        <h2>Reset Kata Sandi Anda</h2>
-        <p>Halo,</p>
-        <p>Kami menerima permintaan untuk mereset kata sandi akun myLaundry Anda. Gunakan kode verifikasi OTP berikut untuk melanjutkan proses pemulihan:</p>
-        <div class="otp-code">%s</div>
-        <p style="font-size: 13px; color: #ef4444; font-weight: 600; text-align: center;">Kode ini hanya berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun.</p>
-        <div class="footer">
-            Email ini dikirim secara otomatis oleh sistem keamanan myLaundry.<br>
-            &copy; 2026 myLaundry. Hak Cipta Dilindungi Undang-Undang.
+    <div class="wrapper">
+        <div class="container">
+            <!-- Header section with dark background & logo -->
+            <div class="header">
+                <img class="logo" src="https://raw.githubusercontent.com/bntngridp/admin-myLaundry/main/assets/img/logo-nobg.png" alt="myLaundry Logo">
+            </div>
+            
+            <!-- Content section -->
+            <div class="content">
+                <h1>Reset Kata Sandi</h1>
+                <p>Halo,</p>
+                <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun <strong>myLaundry Admin</strong> Anda. Silakan gunakan kode verifikasi OTP di bawah ini untuk melanjutkan:</p>
+                
+                <div class="otp-box">
+                    <div class="otp-code">%s</div>
+                </div>
+                
+                <p class="warning-text">⚠️ Kode OTP ini berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun.</p>
+            </div>
+            
+            <!-- Footer section -->
+            <div class="footer">
+                <p class="footer-text">Email ini dikirim secara otomatis oleh sistem keamanan myLaundry. Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini.</p>
+                <div class="footer-links">
+                    <a href="#">Bantuan</a>
+                    &middot;
+                    <a href="#">Kebijakan Privasi</a>
+                </div>
+                <p class="footer-text" style="margin-top: 16px;">&copy; 2026 myLaundry Admin. Hak Cipta Dilindungi.</p>
+            </div>
         </div>
     </div>
 </body>
