@@ -22,6 +22,7 @@ func Register(c *gin.Context) {
 		Password        string `json:"password" form:"password"`
 		ConfirmPassword string `json:"confirm_password" form:"confirm_password"`
 		Role            string `json:"role" form:"role"`
+		EmployeeCode    string `json:"employee_code" form:"employee_code"`
 	}
 
 	// Binding request body into the struct
@@ -61,6 +62,20 @@ func Register(c *gin.Context) {
 		Email:    body.Email,
 		Password: string(hash),
 		Role:     role,
+	}
+
+	// Handle courier specific registration details
+	if role == "courier" {
+		var adminID uint
+		if body.EmployeeCode == "EBS-f4wD" || body.EmployeeCode == "2" || body.EmployeeCode == "admin2" || body.EmployeeCode == "EBS-admin2" {
+			adminID = 2
+		} else if body.EmployeeCode == "EBS-admin1" || body.EmployeeCode == "1" || body.EmployeeCode == "admin1" {
+			adminID = 1
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Kode Khusus Karyawan tidak valid"})
+			return
+		}
+		user.CreatedByAdminID = &adminID
 	}
 
 	// Save user to database
