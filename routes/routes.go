@@ -42,10 +42,10 @@ func SetupRoutes(router *gin.Engine) {
 
 	courierGroup := router.Group("api/couriers")
 	{
-		courierGroup.GET("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("couriers"), courier_controllers.GetCouriers)
-		courierGroup.GET("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("couriers"), courier_controllers.GetCourier)
-		courierGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("couriers"), courier_controllers.UpdateCourier)
-		courierGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("couriers"), courier_controllers.DeleteCourier)
+		courierGroup.GET("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCouriers)
+		courierGroup.GET("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCourier)
+		courierGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.UpdateCourier)
+		courierGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.DeleteCourier)
 	}
 
 	adminGroup := router.Group("api/admins")
