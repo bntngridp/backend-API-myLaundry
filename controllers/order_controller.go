@@ -57,6 +57,8 @@ func GetOrders(c *gin.Context) {
 					query = query.Where("customer_id = ?", userIDUint)
 				} else if roleStr == "courier" {
 					query = query.Where("courier_id = ?", userIDUint)
+				} else if roleStr == "admin" {
+					query = query.Where("admin_id = ? OR admin_id IS NULL", userIDUint)
 				}
 			}
 		}

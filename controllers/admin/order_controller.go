@@ -151,8 +151,30 @@ func GetDashboardStats(c *gin.Context) {
 		return
 	}
 
+	adminID, existsUser := c.Get("user_id")
+	if !existsUser {
+		c.JSON(http.StatusUnauthorized, response.DefaultResponse{
+			Code:    http.StatusUnauthorized,
+			Success: false,
+			Message: "User not authenticated",
+			Data:    nil,
+		})
+		return
+	}
+
+	adminIDUint, ok := adminID.(uint)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, response.DefaultResponse{
+			Code:    http.StatusUnauthorized,
+			Success: false,
+			Message: "Invalid admin ID type",
+			Data:    nil,
+		})
+		return
+	}
+
 	var orders []models.Order
-	if err := config.DB.Find(&orders).Error; err != nil {
+	if err := config.DB.Where("admin_id = ? OR admin_id IS NULL", adminIDUint).Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, response.DefaultResponse{
 			Code:    http.StatusInternalServerError,
 			Success: false,
