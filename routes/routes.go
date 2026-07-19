@@ -16,6 +16,8 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		authRoutes.POST("/register", controllers.Register)
 		authRoutes.POST("/login", controllers.Login)
+		authRoutes.POST("/forgot-password", controllers.ForgotPassword)
+		authRoutes.POST("/reset-password", controllers.ResetPassword)
 	}
 
 	userRoutes := router.Group("api/users")
