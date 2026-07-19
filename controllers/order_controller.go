@@ -56,10 +56,13 @@ func GetOrders(c *gin.Context) {
 	var orderResponses []response.OrderResponse
 	for _, order := range orders {
 		orderResponse := response.OrderResponse{
-			ID:        order.ID,
-			Status:    order.Status,
-			CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt: order.UpdatedAt.Format("2006-01-02 15:04:05"),
+			ID:         order.ID,
+			Status:     order.Status,
+			CreatedAt:  order.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:  order.UpdatedAt.Format("2006-01-02 15:04:05"),
+			TotalPrice: order.TotalPrice,
+			Weight:     order.Weight,
+			Quantity:   order.Quantity,
 			Customer: response.UserResponse{
 				ID:        order.Customer.ID,
 				Username:  order.Customer.Username,
