@@ -162,8 +162,48 @@ func ForgotPassword(c *gin.Context) {
 		config.DB.Create(&newOTP)
 	}
 
-	// Log OTP to terminal console (Simulated Email Delivery)
-	log.Printf("\n======================================================\n[OTP RECOVERY] Code for %s is: %s\n(Expires in 5 minutes)\n======================================================\n", body.Email, otpCode)
+	// Format HTML Email Template
+	htmlMessage := fmt.Sprintf(`
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f7fc; color: #1e293b; margin: 0; padding: 20px; }
+        .card { max-width: 480px; margin: 20px auto; background: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo img { width: 140px; }
+        h2 { font-size: 22px; font-weight: 700; color: #0f172a; text-align: center; margin-top: 0; margin-bottom: 8px; }
+        p { font-size: 15px; line-height: 1.6; color: #475569; text-align: center; margin: 10px 0; }
+        .otp-code { font-size: 34px; font-weight: 800; letter-spacing: 6px; color: #1e3a8a; text-align: center; margin: 24px 0; padding: 14px; background: #eff6ff; border-radius: 12px; border: 1px dashed #bfdbfe; font-family: monospace; }
+        .footer { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <img src="https://raw.githubusercontent.com/bntngridp/admin-myLaundry/main/assets/img/logo-mylaundry.png" alt="myLaundry Logo">
+        </div>
+        <h2>Reset Kata Sandi Anda</h2>
+        <p>Halo,</p>
+        <p>Kami menerima permintaan untuk mereset kata sandi akun myLaundry Anda. Gunakan kode verifikasi OTP berikut untuk melanjutkan proses pemulihan:</p>
+        <div class="otp-code">%s</div>
+        <p style="font-size: 13px; color: #ef4444; font-weight: 600; text-align: center;">Kode ini hanya berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun.</p>
+        <div class="footer">
+            Email ini dikirim secara otomatis oleh sistem keamanan myLaundry.<br>
+            &copy; 2026 myLaundry. Hak Cipta Dilindungi Undang-Undang.
+        </div>
+    </div>
+</body>
+</html>
+`, otpCode)
+
+	// Send Real Email using Gmail SMTP
+	err = utils.SendEmail(body.Email, "myLaundry — Kode OTP Verifikasi", htmlMessage)
+	if err != nil {
+		log.Println("SMTP Email Sending Failed:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
