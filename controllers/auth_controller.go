@@ -388,3 +388,33 @@ func ResetPassword(c *gin.Context) {
 		"message": "Password updated successfully!",
 	})
 }
+
+func VerifyOTP(c *gin.Context) {
+	var body struct {
+		Email string `json:"email" form:"email"`
+		OTP   string `json:"otp" form:"otp"`
+	}
+
+	if err := c.ShouldBind(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input format"})
+		return
+	}
+
+	// Verify OTP
+	var otpRecord models.PasswordResetOTP
+	if err := config.DB.Where("email = ? AND otp = ?", body.Email, body.OTP).First(&otpRecord).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid OTP code"})
+		return
+	}
+
+	// Check expiration
+	if time.Now().After(otpRecord.ExpiresAt) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "OTP has expired"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "OTP verified successfully!",
+	})
+}
