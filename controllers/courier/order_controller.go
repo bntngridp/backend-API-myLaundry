@@ -152,9 +152,10 @@ func AcceptOrder(c *gin.Context) {
 
 func CourierArrived(c *gin.Context) {
 	var body struct {
-		OrderID  uint    `json:"order_id" form:"order_id"`
-		Weight   float64 `json:"weight,omitempty" form:"weight"`
-		Quantity int     `json:"quantity,omitempty" form:"quantity"`
+		OrderID    uint    `json:"order_id" form:"order_id"`
+		Weight     float64 `json:"weight,omitempty" form:"weight"`
+		Quantity   int     `json:"quantity,omitempty" form:"quantity"`
+		TotalPrice float64 `json:"total_price,omitempty" form:"total_price"`
 	}
 
 	if err := c.ShouldBind(&body); err != nil {
@@ -176,7 +177,11 @@ func CourierArrived(c *gin.Context) {
 	}
 
 	var totalPrice float64
-	if service.Category == "Laundry Satuan" {
+	if body.TotalPrice > 0 {
+		totalPrice = body.TotalPrice
+		order.Weight = body.Weight
+		order.Quantity = body.Quantity
+	} else if service.Category == "Laundry Satuan" {
 		order.Quantity = body.Quantity
 		totalPrice = float64(service.Price) * float64(order.Quantity)
 		order.Weight = 0 // Reset weight if it was set
