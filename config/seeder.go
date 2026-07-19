@@ -123,6 +123,10 @@ func SeedDatabase() {
 	DB.Where("email = ?", "courier@mylaundry.com").First(&courier1)
 	DB.Where("email = ?", "courier2@mylaundry.com").First(&courier2)
 
+	var admin1, admin2 models.User
+	DB.Where("email = ?", "admin@mylaundry.com").First(&admin1)
+	DB.Where("email = ?", "admin2@mylaundry.com").First(&admin2)
+
 	// 3. Seed Addresses
 	log.Println("Seeding addresses...")
 	address1 := models.Address{
@@ -172,7 +176,7 @@ func SeedDatabase() {
 			AddressID:  address1.ID,
 			Weight:     5.0,
 			TotalPrice: 5.0 * s1.Price,
-			Status:     "menunggu pembayaran", // Active (unpaid)
+			Status:     "menunggu pembayaran", // Active (unpaid) - visible to all admins
 		},
 		{
 			CustomerID: customer1.ID,
@@ -181,16 +185,17 @@ func SeedDatabase() {
 			CourierID:  &courier1.ID,
 			Weight:     3.5,
 			TotalPrice: 3.5 * s3.Price,
-			Status:     "in progress", // Active (processing)
+			Status:     "in progress", // Active (processing) - visible to all admins
 		},
 		{
 			CustomerID: customer2.ID,
 			ServiceID:  s4.ID,
 			AddressID:  address2.ID,
 			CourierID:  &courier1.ID,
+			AdminID:    &admin1.ID, // Processed by Admin 1 (Admin Laundry Kesatu)
 			Quantity:   2,
 			TotalPrice: 2.0 * s4.Price,
-			Status:     "completed", // History (completed)
+			Status:     "done", // History (completed) - visible ONLY to Admin 1
 		},
 		{
 			CustomerID: customer2.ID,
@@ -198,7 +203,7 @@ func SeedDatabase() {
 			AddressID:  address2.ID,
 			Quantity:   1,
 			TotalPrice: 1.0 * s5.Price,
-			Status:     "cancelled", // History (cancelled)
+			Status:     "cancelled", // History (cancelled) - visible to all admins (no admin assigned)
 		},
 		{
 			CustomerID: customer1.ID,
@@ -207,7 +212,17 @@ func SeedDatabase() {
 			CourierID:  &courier2.ID,
 			Weight:     4.0,
 			TotalPrice: 4.0 * s2.Price,
-			Status:     "courier en route", // Active (delivering)
+			Status:     "courier en route", // Active (delivering) - visible to all admins
+		},
+		{
+			CustomerID: customer2.ID,
+			ServiceID:  s3.ID,
+			AddressID:  address2.ID,
+			CourierID:  &courier2.ID,
+			AdminID:    &admin2.ID, // Processed by Admin 2 (Admin Laundry Kedua)
+			Weight:     6.0,
+			TotalPrice: 6.0 * s3.Price,
+			Status:     "done", // History (completed) - visible ONLY to Admin 2
 		},
 	}
 
