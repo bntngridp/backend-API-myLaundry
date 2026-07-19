@@ -56,7 +56,17 @@ func GetOrders(c *gin.Context) {
 				if roleStr == "customer" {
 					query = query.Where("customer_id = ?", userIDUint)
 				} else if roleStr == "courier" {
-					query = query.Where("courier_id = ?", userIDUint)
+					if c.Query("available") == "true" {
+						// Filter unassigned orders by admin tenant of the courier
+						var courier models.User
+						if err := config.DB.First(&courier, userIDUint).Error; err == nil && courier.CreatedByAdminID != nil {
+							query = query.Where("courier_id IS NULL AND status = ? AND admin_id = ?", "waiting for courier approval", *courier.CreatedByAdminID)
+						} else {
+							query = query.Where("courier_id IS NULL AND status = ?", "waiting for courier approval")
+						}
+					} else {
+						query = query.Where("courier_id = ?", userIDUint)
+					}
 				} else if roleStr == "admin" {
 					query = query.Where("admin_id = ? OR admin_id IS NULL", userIDUint)
 				}
@@ -96,13 +106,15 @@ func GetOrders(c *gin.Context) {
 				Username:  order.Courier.Username,
 				Email:     order.Courier.Email,
 				Role:      nil,
-				Addresses: nil},
+				Addresses: nil,
+			},
 			Admin: response.UserResponse{
 				ID:        order.Admin.ID,
 				Username:  order.Admin.Username,
 				Email:     order.Admin.Email,
 				Role:      nil,
-				Addresses: nil},
+				Addresses: nil,
+			},
 			Service: response.ServiceResponse{
 				ID:    order.Service.ID,
 				Title: order.Service.Title,
