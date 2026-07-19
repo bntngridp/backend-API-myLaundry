@@ -108,9 +108,11 @@ func (sc *ServiceController) GetServiceByCategory(c *gin.Context) {
 // GetServiceByID mengambil layanan berdasarkan ID
 func (sc *ServiceController) GetServiceByID(c *gin.Context) {
 	id := c.Param("id")
+	userID, _ := c.Get("user_id")
+	userIDUint, _ := userID.(uint)
 
 	var service models.Service
-	if err := config.DB.First(&service, id).Error; err != nil {
+	if err := config.DB.Where("id = ? AND admin_id = ?", id, userIDUint).First(&service).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Service not found"})
 		return
 	}
