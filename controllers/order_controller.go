@@ -43,8 +43,27 @@ func UpdateOrderStatus(c *gin.Context) {
 }
 
 func GetOrders(c *gin.Context) {
+	role, existsRole := c.Get("role")
+	loggedInUserID, existsUser := c.Get("user_id")
+
+	query := config.DB.Preload("Customer").Preload("Courier").Preload("Admin").Preload("Service").Preload("Address")
+
+	if existsRole && existsUser {
+		userIDUint, ok := loggedInUserID.(uint)
+		if ok {
+			roleStr, okRole := role.(string)
+			if okRole {
+				if roleStr == "customer" {
+					query = query.Where("customer_id = ?", userIDUint)
+				} else if roleStr == "courier" {
+					query = query.Where("courier_id = ?", userIDUint)
+				}
+			}
+		}
+	}
+
 	var orders []models.Order
-	if err := config.DB.Preload("Customer").Preload("Courier").Preload("Admin").Preload("Service").Preload("Address").Find(&orders).Error; err != nil {
+	if err := query.Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, response.DefaultResponse{
 			Success: false,
 			Message: "Failed to retrieve orders",
