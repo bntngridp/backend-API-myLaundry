@@ -44,12 +44,18 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// Determine role: use body.Role if provided, default to customer
+	role := body.Role
+	if role == "" {
+		role = "customer"
+	}
+
 	// Create user object
 	user := models.User{
 		Username: body.Username,
 		Email:    body.Email,
 		Password: string(hash),
-		Role:     "customer", // Always default public registration to customer for security
+		Role:     role,
 	}
 
 	// Save user to database
