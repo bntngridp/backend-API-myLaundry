@@ -54,6 +54,7 @@ func SetupRoutes(router *gin.Engine) {
 		adminGroup.GET("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.GetAdmin)
 		adminGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.UpdateAdmin)
 		adminGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.DeleteAdmin)
+		adminGroup.GET("/stats", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.GetDashboardStats)
 	}
 
 	orderRoutes := router.Group("api/orders")

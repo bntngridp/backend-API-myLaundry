@@ -2,6 +2,7 @@ package admin_controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/raihansyahrin/backend_laundry_app.git/config"
@@ -134,5 +135,85 @@ func OrderComplete(c *gin.Context) {
 		Success: true,
 		Message: "Order complete",
 		Data:    orderResponse,
+	})
+}
+
+func GetDashboardStats(c *gin.Context) {
+	// Validasi admin role
+	userRole, exists := c.Get("role")
+	if !exists || userRole != "admin" {
+		c.JSON(http.StatusUnauthorized, response.DefaultResponse{
+			Code:    http.StatusUnauthorized,
+			Success: false,
+			Message: "User is not authorized as an admin",
+			Data:    nil,
+		})
+		return
+	}
+
+	var orders []models.Order
+	if err := config.DB.Find(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, response.DefaultResponse{
+			Code:    http.StatusInternalServerError,
+			Success: false,
+			Message: "Failed to retrieve orders",
+			Data:    nil,
+		})
+		return
+	}
+
+	now := time.Now()
+	thisMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	lastMonthStart := thisMonthStart.AddDate(0, -1, 0)
+	lastMonthEnd := thisMonthStart.Add(-time.Second)
+
+	var thisMonthSales float64
+	var lastMonthSales float64
+	var totalSales float64
+	var totalOrders int = len(orders)
+
+	for _, order := range orders {
+		if order.Status == "done" || order.Status == "completed" {
+			totalSales += order.TotalPrice
+			if order.CreatedAt.After(thisMonthStart) {
+				thisMonthSales += order.TotalPrice
+			} else if order.CreatedAt.After(lastMonthStart) && order.CreatedAt.Before(lastMonthEnd) {
+				lastMonthSales += order.TotalPrice
+			}
+		}
+	}
+
+	var percentage float64
+	var trend string = "none"
+
+	if lastMonthSales > 0 {
+		percentage = ((thisMonthSales - lastMonthSales) / lastMonthSales) * 100
+		if percentage > 0 {
+			trend = "up"
+		} else if percentage < 0 {
+			trend = "down"
+		}
+	} else if thisMonthSales > 0 {
+		percentage = 100
+		trend = "up"
+	} else {
+		percentage = 0
+		trend = "none"
+	}
+
+	if percentage < 0 {
+		percentage = -percentage
+	}
+
+	c.JSON(http.StatusOK, response.DefaultResponse{
+		Code:    http.StatusOK,
+		Success: true,
+		Message: "Dashboard stats retrieved successfully",
+		Data: gin.H{
+			"total_sales":      totalSales,
+			"sales_percentage": percentage,
+			"sales_trend":      trend,
+			"total_orders":     totalOrders,
+		},
 	})
 }
