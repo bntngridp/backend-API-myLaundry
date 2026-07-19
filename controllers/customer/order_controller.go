@@ -22,6 +22,21 @@ func GetOrderDetailForCustomer(c *gin.Context) {
 		return
 	}
 
+	// Enforce tenant isolation for customer roles
+	role, existsRole := c.Get("role")
+	loggedInUserID, existsUser := c.Get("user_id")
+	if existsRole && role == "customer" && existsUser {
+		userIDUint, ok := loggedInUserID.(uint)
+		if ok && uint(customerID) != userIDUint {
+			c.JSON(http.StatusForbidden, response.DefaultResponse{
+				Success: false,
+				Message: "Access denied: you can only access your own orders",
+				Code:    http.StatusForbidden,
+			})
+			return
+		}
+	}
+
 	// Fetch orders by customer ID
 	var orders []models.Order
 	if err := config.DB.Preload("Customer").Preload("Courier").Preload("Admin").Preload("Service").Preload("Address").Where("customer_id = ?", customerID).Find(&orders).Error; err != nil {
