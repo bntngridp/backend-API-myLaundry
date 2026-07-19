@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/raihansyahrin/backend_laundry_app.git/models"
@@ -43,54 +44,85 @@ func SeedDatabase() {
 	DB.Create(&admin1)
 	DB.Create(&admin2)
 
-	// 2. Seed Couriers & Customers with CreatedByAdminID
+	// 2. Seed Couriers & Customers
 	log.Println("Seeding Couriers and Customers...")
-	couriersAndCustomers := []models.User{
-		{
-			Username:         "Kurir Bagus",
-			Email:            "courier@mylaundry.com",
-			Password:         string(hashedPassword),
-			Role:             "courier",
-			CreatedByAdminID: &admin1.ID,
-		},
-		{
-			Username:         "Kurir Amanah",
-			Email:            "courier2@mylaundry.com",
-			Password:         string(hashedPassword),
-			Role:             "courier",
-			CreatedByAdminID: &admin2.ID,
-		},
-		{
-			Username:         "Budi Customer",
-			Email:            "customer@mylaundry.com",
-			Password:         string(hashedPassword),
-			Role:             "customer",
-			CreatedByAdminID: &admin1.ID,
-		},
-		{
-			Username:         "Ahmad Customer",
-			Email:            "customer2@mylaundry.com",
-			Password:         string(hashedPassword),
-			Role:             "customer",
-			CreatedByAdminID: &admin2.ID,
-		},
+
+	// Seed Couriers & Customers for Admin 1 (keep existing ones)
+	courier1 := models.User{
+		Username:         "Kurir Bagus",
+		Email:            "courier@mylaundry.com",
+		Password:         string(hashedPassword),
+		Role:             "courier",
+		CreatedByAdminID: &admin1.ID,
 	}
-	for _, u := range couriersAndCustomers {
+	customer1 := models.User{
+		Username:         "Budi Customer",
+		Email:            "customer@mylaundry.com",
+		Password:         string(hashedPassword),
+		Role:             "customer",
+		CreatedByAdminID: &admin1.ID,
+	}
+	DB.Create(&courier1)
+	DB.Create(&customer1)
+
+	// Seed at least 10 Couriers for Admin 2
+	couriersAdmin2 := []models.User{}
+	courierNames := []string{
+		"Kurir Amanah", "Kurir Cepat", "Kurir Tangkas", "Kurir Jujur", "Kurir Handal",
+		"Kurir Ramah", "Kurir Santun", "Kurir Sigap", "Kurir Satset", "Kurir Gesit",
+	}
+	for i, name := range courierNames {
+		email := fmt.Sprintf("courier2_%d@mylaundry.com", i+1)
+		if i == 0 {
+			email = "courier2@mylaundry.com" // keep the existing primary courier
+		}
+		couriersAdmin2 = append(couriersAdmin2, models.User{
+			Username:         name,
+			Email:            email,
+			Password:         string(hashedPassword),
+			Role:             "courier",
+			CreatedByAdminID: &admin2.ID,
+		})
+	}
+	for _, u := range couriersAdmin2 {
+		DB.Create(&u)
+	}
+
+	// Seed at least 10 Customers for Admin 2
+	customersAdmin2 := []models.User{}
+	customerNames := []string{
+		"Ahmad Customer", "Bambang Customer", "Chandra Customer", "Dedi Customer", "Eko Customer",
+		"Fajar Customer", "Gunawan Customer", "Hendra Customer", "Indra Customer", "Joko Customer",
+	}
+	for i, name := range customerNames {
+		email := fmt.Sprintf("customer2_%d@mylaundry.com", i+1)
+		if i == 0 {
+			email = "customer2@mylaundry.com" // keep the existing primary customer
+		}
+		customersAdmin2 = append(customersAdmin2, models.User{
+			Username:         name,
+			Email:            email,
+			Password:         string(hashedPassword),
+			Role:             "customer",
+			CreatedByAdminID: &admin2.ID,
+		})
+	}
+	for _, u := range customersAdmin2 {
 		DB.Create(&u)
 	}
 
 	// Re-fetch customer users to set up addresses
-	var customer1, customer2 models.User
-	DB.Where("email = ?", "customer@mylaundry.com").First(&customer1)
-	DB.Where("email = ?", "customer2@mylaundry.com").First(&customer2)
+	var seededCustomers2 []models.User
+	DB.Where("created_by_admin_id = ? AND role = ?", admin2.ID, "customer").Order("id asc").Find(&seededCustomers2)
 
-	var courier1, courier2 models.User
-	DB.Where("email = ?", "courier@mylaundry.com").First(&courier1)
-	DB.Where("email = ?", "courier2@mylaundry.com").First(&courier2)
+	var seededCouriers2 []models.User
+	DB.Where("created_by_admin_id = ? AND role = ?", admin2.ID, "courier").Order("id asc").Find(&seededCouriers2)
 
 	// 3. Seed Services (Products) with AdminID
 	log.Println("Seeding services...")
-	services := []models.Service{
+	
+	// Services for Admin 1 (keep existing ones)
+	servicesAdmin1 := []models.Service{
 		{
 			Title:    "Wash & Fold Regular",
 			Time:     48,
@@ -112,6 +144,13 @@ func SeedDatabase() {
 			Category: "Kiloan",
 			AdminID:  &admin1.ID,
 		},
+	}
+	for _, s := range servicesAdmin1 {
+		DB.Create(&s)
+	}
+
+	// Seed at least 10 Services (Products) for Admin 2
+	servicesAdmin2 := []models.Service{
 		{
 			Title:    "Suit Jacket Dry Clean",
 			Time:     72,
@@ -126,10 +165,69 @@ func SeedDatabase() {
 			Category: "Satuan",
 			AdminID:  &admin2.ID,
 		},
+		{
+			Title:    "Carpet Wash Premium",
+			Time:     120,
+			Price:    25000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Bed Cover Double Wash",
+			Time:     48,
+			Price:    20000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Leather Jacket Care",
+			Time:     168,
+			Price:    50000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Curtain Cleaning Regular",
+			Time:     96,
+			Price:    8000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Sneakers Deep Clean",
+			Time:     72,
+			Price:    30000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Backpack Wash Regular",
+			Time:     48,
+			Price:    15000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Sleeping Bag Wash",
+			Time:     72,
+			Price:    18000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Baby Stroller Cleaning",
+			Time:     120,
+			Price:    60000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
 	}
-	for _, s := range services {
+	for _, s := range servicesAdmin2 {
 		DB.Create(&s)
 	}
+
+	var seededServices2 []models.Service
+	DB.Where("admin_id = ?", admin2.ID).Order("id asc").Find(&seededServices2)
 
 	// 4. Seed Addresses
 	log.Println("Seeding addresses...")
@@ -148,39 +246,44 @@ func SeedDatabase() {
 	}
 	DB.Create(&address1)
 
-	address2 := models.Address{
-		CustomerID:    customer2.ID,
-		ReceiverName:  "Ahmad Fauzi",
-		PhoneNumber:   "085721113444",
-		HouseNumber:   "Blok C-12",
-		ResidenceName: "Perumahan Podomoro Land",
-		AddressNotes:  "Belok kanan setelah pos satpam utama",
-		StreetName:    "Jl. Bojongsoang Raya",
-		District:      "Bojongsoang",
-		SubDistrict:   "Bojongsoang",
-		City:          "Bandung",
-		Area:          "Bojongsoang",
+	// Seed Addresses for Admin 2 customers (10 total)
+	seededAddresses2 := []models.Address{}
+	for i, cust := range seededCustomers2 {
+		addr := models.Address{
+			CustomerID:    cust.ID,
+			ReceiverName:  fmt.Sprintf("Receiver for %s", cust.Username),
+			PhoneNumber:   fmt.Sprintf("085721113%03d", i+1),
+			HouseNumber:   fmt.Sprintf("Blok C-%d", i+12),
+			ResidenceName: "Perumahan Podomoro Land",
+			AddressNotes:  "Belok kanan setelah pos satpam utama",
+			StreetName:    "Jl. Bojongsoang Raya",
+			District:      "Bojongsoang",
+			SubDistrict:   "Bojongsoang",
+			City:          "Bandung",
+			Area:          "Bojongsoang",
+		}
+		DB.Create(&addr)
+		seededAddresses2 = append(seededAddresses2, addr)
 	}
-	DB.Create(&address2)
 
 	// Re-fetch services for orders
-	var s1, s2, s3, s4, s5 models.Service
+	var s1, s2, s3 models.Service
 	DB.Where("title = ? AND admin_id = ?", "Wash & Fold Regular", admin1.ID).First(&s1)
 	DB.Where("title = ? AND admin_id = ?", "Ironing Only Regular", admin1.ID).First(&s2)
 	DB.Where("title = ? AND admin_id = ?", "Wash & Iron Express", admin1.ID).First(&s3)
-	DB.Where("title = ? AND admin_id = ?", "Suit Jacket Dry Clean", admin2.ID).First(&s4)
-	DB.Where("title = ? AND admin_id = ?", "Blanket Single Wash", admin2.ID).First(&s5)
 
 	// 5. Seed Orders
 	log.Println("Seeding orders...")
-	orders := []models.Order{
+
+	// Orders for Admin 1 (keep existing ones)
+	ordersAdmin1 := []models.Order{
 		{
 			CustomerID: customer1.ID,
 			ServiceID:  s1.ID,
 			AddressID:  address1.ID,
 			Weight:     5.0,
 			TotalPrice: 5.0 * s1.Price,
-			Status:     "menunggu pembayaran", // Active (unpaid) - visible to Admin 1
+			Status:     "menunggu pembayaran",
 			AdminID:    &admin1.ID,
 		},
 		{
@@ -190,27 +293,8 @@ func SeedDatabase() {
 			CourierID:  &courier1.ID,
 			Weight:     3.5,
 			TotalPrice: 3.5 * s3.Price,
-			Status:     "in progress", // Active (processing) - visible to Admin 1
+			Status:     "in progress",
 			AdminID:    &admin1.ID,
-		},
-		{
-			CustomerID: customer2.ID,
-			ServiceID:  s4.ID,
-			AddressID:  address2.ID,
-			CourierID:  &courier2.ID,
-			AdminID:    &admin2.ID, // Processed by Admin 2 (Admin Laundry Kedua)
-			Quantity:   2,
-			TotalPrice: 2.0 * s4.Price,
-			Status:     "done", // History (completed) - visible ONLY to Admin 2
-		},
-		{
-			CustomerID: customer2.ID,
-			ServiceID:  s5.ID,
-			AddressID:  address2.ID,
-			AdminID:    &admin2.ID,
-			Quantity:   1,
-			TotalPrice: 1.0 * s5.Price,
-			Status:     "cancelled", // History (cancelled) - visible to Admin 2
 		},
 		{
 			CustomerID: customer1.ID,
@@ -219,14 +303,45 @@ func SeedDatabase() {
 			CourierID:  &courier1.ID,
 			Weight:     4.0,
 			TotalPrice: 4.0 * s2.Price,
-			Status:     "courier en route", // Active (delivering) - visible to Admin 1
+			Status:     "courier en route",
 			AdminID:    &admin1.ID,
 		},
 	}
+	for _, order := range ordersAdmin1 {
+		DB.Create(&order)
+	}
 
-	for _, order := range orders {
+	// Seed at least 10 Orders for Admin 2
+	statuses := []string{
+		"done", "cancelled", "done", "cancelled", "done",
+		"awaiting payment", "in progress", "courier en route", "pending", "arrived",
+	}
+
+	for i := 0; i < 10; i++ {
+		cust := seededCustomers2[i%len(seededCustomers2)]
+		serv := seededServices2[i%len(seededServices2)]
+		addr := seededAddresses2[i%len(seededAddresses2)]
+		cour := seededCouriers2[i%len(seededCouriers2)]
+		status := statuses[i]
+
+		var courierID *uint
+		if status != "pending" && status != "awaiting payment" {
+			courierID = &cour.ID
+		}
+
+		qty := float64((i % 3) + 1)
+		order := models.Order{
+			CustomerID: cust.ID,
+			ServiceID:  serv.ID,
+			AddressID:  addr.ID,
+			CourierID:  courierID,
+			AdminID:    &admin2.ID,
+			Quantity:   int(qty),
+			TotalPrice: qty * serv.Price,
+			Status:     status,
+		}
 		if err := DB.Create(&order).Error; err != nil {
-			log.Println("Failed to seed order:", err)
+			log.Println("Failed to seed Admin 2 order:", err)
 		}
 	}
 
