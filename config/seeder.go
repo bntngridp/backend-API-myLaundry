@@ -26,95 +26,60 @@ func SeedDatabase() {
 		log.Fatal("Failed to hash seeder passwords:", err)
 	}
 
-	// 1. Seed Users
-	log.Println("Seeding users...")
-	users := []models.User{
+	// 1. Seed Admins First
+	log.Println("Seeding Admins...")
+	admin1 := models.User{
+		Username: "Admin Laundry Kesatu",
+		Email:    "admin@mylaundry.com",
+		Password: string(hashedPassword),
+		Role:     "admin",
+	}
+	admin2 := models.User{
+		Username: "Admin Laundry Kedua",
+		Email:    "admin2@mylaundry.com",
+		Password: string(hashedPassword),
+		Role:     "admin",
+	}
+	DB.Create(&admin1)
+	DB.Create(&admin2)
+
+	// 2. Seed Couriers & Customers with CreatedByAdminID
+	log.Println("Seeding Couriers and Customers...")
+	couriersAndCustomers := []models.User{
 		{
-			Username: "Admin Laundry Kesatu",
-			Email:    "admin@mylaundry.com",
-			Password: string(hashedPassword),
-			Role:     "admin",
+			Username:         "Kurir Bagus",
+			Email:            "courier@mylaundry.com",
+			Password:         string(hashedPassword),
+			Role:             "courier",
+			CreatedByAdminID: &admin1.ID,
 		},
 		{
-			Username: "Admin Laundry Kedua",
-			Email:    "admin2@mylaundry.com",
-			Password: string(hashedPassword),
-			Role:     "admin",
+			Username:         "Kurir Amanah",
+			Email:            "courier2@mylaundry.com",
+			Password:         string(hashedPassword),
+			Role:             "courier",
+			CreatedByAdminID: &admin2.ID,
 		},
 		{
-			Username: "Kurir Bagus",
-			Email:    "courier@mylaundry.com",
-			Password: string(hashedPassword),
-			Role:     "courier",
+			Username:         "Budi Customer",
+			Email:            "customer@mylaundry.com",
+			Password:         string(hashedPassword),
+			Role:             "customer",
+			CreatedByAdminID: &admin1.ID,
 		},
 		{
-			Username: "Kurir Amanah",
-			Email:    "courier2@mylaundry.com",
-			Password: string(hashedPassword),
-			Role:     "courier",
-		},
-		{
-			Username: "Budi Customer",
-			Email:    "customer@mylaundry.com",
-			Password: string(hashedPassword),
-			Role:     "customer",
-		},
-		{
-			Username: "Ahmad Customer",
-			Email:    "customer2@mylaundry.com",
-			Password: string(hashedPassword),
-			Role:     "customer",
+			Username:         "Ahmad Customer",
+			Email:            "customer2@mylaundry.com",
+			Password:         string(hashedPassword),
+			Role:             "customer",
+			CreatedByAdminID: &admin2.ID,
 		},
 	}
-
-	for _, user := range users {
-		if err := DB.Create(&user).Error; err != nil {
-			log.Println("Failed to seed user:", user.Email, err)
-		}
+	for _, u := range couriersAndCustomers {
+		DB.Create(&u)
 	}
 
-	// 2. Seed Services (Products)
-	log.Println("Seeding services...")
-	services := []models.Service{
-		{
-			Title:    "Wash & Fold Regular",
-			Time:     48,
-			Price:    6000,
-			Category: "Kiloan",
-		},
-		{
-			Title:    "Ironing Only Regular",
-			Time:     24,
-			Price:    4000,
-			Category: "Kiloan",
-		},
-		{
-			Title:    "Wash & Iron Express",
-			Time:     12,
-			Price:    10000,
-			Category: "Kiloan",
-		},
-		{
-			Title:    "Suit Jacket Dry Clean",
-			Time:     72,
-			Price:    15000,
-			Category: "Satuan",
-		},
-		{
-			Title:    "Blanket Single Wash",
-			Time:     48,
-			Price:    12000,
-			Category: "Satuan",
-		},
-	}
-
-	for _, service := range services {
-		if err := DB.Create(&service).Error; err != nil {
-			log.Println("Failed to seed service:", service.Title, err)
-		}
-	}
-
-	// Re-fetch users for addresses and orders
+	// Re-fetch customer users to set up addresses
 	var customer1, customer2 models.User
 	DB.Where("email = ?", "customer@mylaundry.com").First(&customer1)
 	DB.Where("email = ?", "customer2@mylaundry.com").First(&customer2)
@@ -123,11 +88,50 @@ func SeedDatabase() {
 	DB.Where("email = ?", "courier@mylaundry.com").First(&courier1)
 	DB.Where("email = ?", "courier2@mylaundry.com").First(&courier2)
 
-	var admin1, admin2 models.User
-	DB.Where("email = ?", "admin@mylaundry.com").First(&admin1)
-	DB.Where("email = ?", "admin2@mylaundry.com").First(&admin2)
+	// 3. Seed Services (Products) with AdminID
+	log.Println("Seeding services...")
+	services := []models.Service{
+		{
+			Title:    "Wash & Fold Regular",
+			Time:     48,
+			Price:    6000,
+			Category: "Kiloan",
+			AdminID:  &admin1.ID,
+		},
+		{
+			Title:    "Ironing Only Regular",
+			Time:     24,
+			Price:    4000,
+			Category: "Kiloan",
+			AdminID:  &admin1.ID,
+		},
+		{
+			Title:    "Wash & Iron Express",
+			Time:     12,
+			Price:    10000,
+			Category: "Kiloan",
+			AdminID:  &admin1.ID,
+		},
+		{
+			Title:    "Suit Jacket Dry Clean",
+			Time:     72,
+			Price:    15000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+		{
+			Title:    "Blanket Single Wash",
+			Time:     48,
+			Price:    12000,
+			Category: "Satuan",
+			AdminID:  &admin2.ID,
+		},
+	}
+	for _, s := range services {
+		DB.Create(&s)
+	}
 
-	// 3. Seed Addresses
+	// 4. Seed Addresses
 	log.Println("Seeding addresses...")
 	address1 := models.Address{
 		CustomerID:    customer1.ID,
@@ -159,15 +163,15 @@ func SeedDatabase() {
 	}
 	DB.Create(&address2)
 
-	// Re-fetch services
+	// Re-fetch services for orders
 	var s1, s2, s3, s4, s5 models.Service
-	DB.Where("title = ?", "Wash & Fold Regular").First(&s1)
-	DB.Where("title = ?", "Ironing Only Regular").First(&s2)
-	DB.Where("title = ?", "Wash & Iron Express").First(&s3)
-	DB.Where("title = ?", "Suit Jacket Dry Clean").First(&s4)
-	DB.Where("title = ?", "Blanket Single Wash").First(&s5)
+	DB.Where("title = ? AND admin_id = ?", "Wash & Fold Regular", admin1.ID).First(&s1)
+	DB.Where("title = ? AND admin_id = ?", "Ironing Only Regular", admin1.ID).First(&s2)
+	DB.Where("title = ? AND admin_id = ?", "Wash & Iron Express", admin1.ID).First(&s3)
+	DB.Where("title = ? AND admin_id = ?", "Suit Jacket Dry Clean", admin2.ID).First(&s4)
+	DB.Where("title = ? AND admin_id = ?", "Blanket Single Wash", admin2.ID).First(&s5)
 
-	// 4. Seed Orders
+	// 5. Seed Orders
 	log.Println("Seeding orders...")
 	orders := []models.Order{
 		{
@@ -176,7 +180,8 @@ func SeedDatabase() {
 			AddressID:  address1.ID,
 			Weight:     5.0,
 			TotalPrice: 5.0 * s1.Price,
-			Status:     "menunggu pembayaran", // Active (unpaid) - visible to all admins
+			Status:     "menunggu pembayaran", // Active (unpaid) - visible to Admin 1
+			AdminID:    &admin1.ID,
 		},
 		{
 			CustomerID: customer1.ID,
@@ -185,44 +190,37 @@ func SeedDatabase() {
 			CourierID:  &courier1.ID,
 			Weight:     3.5,
 			TotalPrice: 3.5 * s3.Price,
-			Status:     "in progress", // Active (processing) - visible to all admins
+			Status:     "in progress", // Active (processing) - visible to Admin 1
+			AdminID:    &admin1.ID,
 		},
 		{
 			CustomerID: customer2.ID,
 			ServiceID:  s4.ID,
 			AddressID:  address2.ID,
-			CourierID:  &courier1.ID,
-			AdminID:    &admin1.ID, // Processed by Admin 1 (Admin Laundry Kesatu)
+			CourierID:  &courier2.ID,
+			AdminID:    &admin2.ID, // Processed by Admin 2 (Admin Laundry Kedua)
 			Quantity:   2,
 			TotalPrice: 2.0 * s4.Price,
-			Status:     "done", // History (completed) - visible ONLY to Admin 1
+			Status:     "done", // History (completed) - visible ONLY to Admin 2
 		},
 		{
 			CustomerID: customer2.ID,
 			ServiceID:  s5.ID,
 			AddressID:  address2.ID,
+			AdminID:    &admin2.ID,
 			Quantity:   1,
 			TotalPrice: 1.0 * s5.Price,
-			Status:     "cancelled", // History (cancelled) - visible to all admins (no admin assigned)
+			Status:     "cancelled", // History (cancelled) - visible to Admin 2
 		},
 		{
 			CustomerID: customer1.ID,
 			ServiceID:  s2.ID,
 			AddressID:  address1.ID,
-			CourierID:  &courier2.ID,
+			CourierID:  &courier1.ID,
 			Weight:     4.0,
 			TotalPrice: 4.0 * s2.Price,
-			Status:     "courier en route", // Active (delivering) - visible to all admins
-		},
-		{
-			CustomerID: customer2.ID,
-			ServiceID:  s3.ID,
-			AddressID:  address2.ID,
-			CourierID:  &courier2.ID,
-			AdminID:    &admin2.ID, // Processed by Admin 2 (Admin Laundry Kedua)
-			Weight:     6.0,
-			TotalPrice: 6.0 * s3.Price,
-			Status:     "done", // History (completed) - visible ONLY to Admin 2
+			Status:     "courier en route", // Active (delivering) - visible to Admin 1
+			AdminID:    &admin1.ID,
 		},
 	}
 

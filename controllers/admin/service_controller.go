@@ -13,8 +13,30 @@ type ServiceController struct{}
 
 // GetServices mengambil semua layanan
 func (sc *ServiceController) GetServices(c *gin.Context) {
+	role, existsRole := c.Get("role")
+	loggedInUserID, existsUser := c.Get("user_id")
+
+	query := config.DB
+
+	if existsRole && existsUser {
+		userIDUint, ok := loggedInUserID.(uint)
+		if ok {
+			roleStr, okRole := role.(string)
+			if okRole {
+				if roleStr == "admin" {
+					query = query.Where("admin_id = ?", userIDUint)
+				} else {
+					var loggedInUser models.User
+					if err := config.DB.First(&loggedInUser, userIDUint).Error; err == nil && loggedInUser.CreatedByAdminID != nil {
+						query = query.Where("admin_id = ?", *loggedInUser.CreatedByAdminID)
+					}
+				}
+			}
+		}
+	}
+
 	var services []models.Service
-	if err := config.DB.Find(&services).Error; err != nil {
+	if err := query.Find(&services).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to retrieve services"})
 		return
 	}
@@ -41,8 +63,30 @@ func (sc *ServiceController) GetServiceByCategory(c *gin.Context) {
 	// Ubah spasi menjadi underscore pada kategori
 	categoryEndpoint := strings.ReplaceAll(strings.ToLower(category), " ", "_")
 
+	role, existsRole := c.Get("role")
+	loggedInUserID, existsUser := c.Get("user_id")
+
+	query := config.DB.Where("category = ?", category)
+
+	if existsRole && existsUser {
+		userIDUint, ok := loggedInUserID.(uint)
+		if ok {
+			roleStr, okRole := role.(string)
+			if okRole {
+				if roleStr == "admin" {
+					query = query.Where("admin_id = ?", userIDUint)
+				} else {
+					var loggedInUser models.User
+					if err := config.DB.First(&loggedInUser, userIDUint).Error; err == nil && loggedInUser.CreatedByAdminID != nil {
+						query = query.Where("admin_id = ?", *loggedInUser.CreatedByAdminID)
+					}
+				}
+			}
+		}
+	}
+
 	var services []models.Service
-	if err := config.DB.Where("category = ?", category).Find(&services).Error; err != nil {
+	if err := query.Find(&services).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to retrieve services by category"})
 		return
 	}
@@ -86,6 +130,14 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 	if err := c.ShouldBind(&service); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input format"})
 		return
+	}
+
+	adminID, existsUser := c.Get("user_id")
+	if existsUser {
+		adminIDUint, ok := adminID.(uint)
+		if ok {
+			service.AdminID = &adminIDUint
+		}
 	}
 
 	if err := config.DB.Create(&service).Error; err != nil {

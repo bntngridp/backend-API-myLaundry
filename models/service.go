@@ -10,4 +10,5 @@ type Service struct {
 	Time     int     `json:"time" form:"time"`
 	Price    float64 `json:"price" form:"price"`
 	Category string  `json:"category" form:"category"`
+	AdminID  *uint   `json:"admin_id"`
 }

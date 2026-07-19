@@ -12,8 +12,30 @@ import (
 
 // GetCustomers retrieves all customers with their addresses
 func GetCustomers(c *gin.Context) {
+	role, existsRole := c.Get("role")
+	loggedInUserID, existsUser := c.Get("user_id")
+
+	query := config.DB.Preload("Addresses").Where("role = ?", "customer")
+
+	if existsRole && existsUser {
+		userIDUint, ok := loggedInUserID.(uint)
+		if ok {
+			roleStr, okRole := role.(string)
+			if okRole {
+				if roleStr == "admin" {
+					query = query.Where("created_by_admin_id = ?", userIDUint)
+				} else {
+					var loggedInUser models.User
+					if err := config.DB.First(&loggedInUser, userIDUint).Error; err == nil && loggedInUser.CreatedByAdminID != nil {
+						query = query.Where("created_by_admin_id = ?", *loggedInUser.CreatedByAdminID)
+					}
+				}
+			}
+		}
+	}
+
 	var customers []models.User
-	if err := config.DB.Preload("Addresses").Where("role = ?", "customer").Find(&customers).Error; err != nil {
+	if err := query.Find(&customers).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to retrieve customers"})
 		return
 	}

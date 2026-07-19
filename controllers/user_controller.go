@@ -216,6 +216,14 @@ func CreateUser(c *gin.Context) {
 		Role:     body.Role,
 	}
 
+	adminID, existsUser := c.Get("user_id")
+	if existsUser {
+		adminIDUint, ok := adminID.(uint)
+		if ok {
+			user.CreatedByAdminID = &adminIDUint
+		}
+	}
+
 	// Save user to database
 	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user"})

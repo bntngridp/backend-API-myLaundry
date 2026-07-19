@@ -78,7 +78,7 @@ func SetupRoutes(router *gin.Engine) {
 		orderRoutes.POST("/order-complete", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.OrderComplete)
 	}
 
-	serviceRoutes := router.Group("api/services")
+	serviceRoutes := router.Group("api/services", middlewares.AuthMiddleware())
 	{
 		serviceController := &admin_controllers.ServiceController{}
 		serviceRoutes.GET("/", serviceController.GetServices)
