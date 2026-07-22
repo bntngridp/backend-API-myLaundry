@@ -38,10 +38,10 @@ Golang-based RESTful API designed as the backend power engine for the **myLaundr
     ```
 2.  Open `.env` and configure your local MySQL credentials:
     ```ini
-    PORT=8085
+    PORT=8083
     GIN_MODE=debug
-    DB_DSN=root:yourpassword@tcp(localhost:3306)/backend_laundry_app?charset=utf8mb4&parseTime=True&loc=Local
-    JWT_SECRET=your_jwt_secret_key
+    DB_DSN=root:@tcp(127.0.0.1:3306)/mylaundry?charset=utf8mb4&parseTime=True&loc=Local
+    JWT_SECRET=your_super_secret_jwt_key
     ```
 3.  Ensure the target database (e.g. `backend_laundry_app`) exists in your MySQL server.
 
@@ -50,7 +50,7 @@ Start the API server:
 ```bash
 go run main.go
 ```
-The server will boot up, wipe/re-seed the tables, and start listening on the port configured in `.env` (default is `:8085`).
+The server will boot up, wipe/re-seed the tables, and start listening on the port configured in `.env` (default is `:8083`).
 
 ---
 
