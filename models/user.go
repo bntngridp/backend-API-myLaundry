@@ -8,6 +8,7 @@ type User struct {
 	gorm.Model
 	Username         string    `json:"username"`
 	Email            string    `json:"email" gorm:"unique"`
+	PhoneNumber      string    `json:"phone_number" gorm:"unique"`
 	Password         string    `json:"password"`
 	Role             string    `json:"role"` // "customer", "admin", "courier"
 	CreatedByAdminID *uint     `json:"created_by_admin_id"`

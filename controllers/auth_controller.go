@@ -19,6 +19,7 @@ func Register(c *gin.Context) {
 	var body struct {
 		Username        string `json:"username" form:"username"`
 		Email           string `json:"email" form:"email"`
+		PhoneNumber     string `json:"phone_number" form:"phone_number"`
 		Password        string `json:"password" form:"password"`
 		ConfirmPassword string `json:"confirm_password" form:"confirm_password"`
 		Role            string `json:"role" form:"role"`
@@ -58,10 +59,11 @@ func Register(c *gin.Context) {
 
 	// Create user object
 	user := models.User{
-		Username: body.Username,
-		Email:    body.Email,
-		Password: string(hash),
-		Role:     role,
+		Username:    body.Username,
+		Email:       body.Email,
+		PhoneNumber: body.PhoneNumber,
+		Password:    string(hash),
+		Role:        role,
 	}
 
 	// Handle courier specific registration details
@@ -103,7 +105,7 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := config.DB.Where("email = ?", body.Email).First(&user).Error; err != nil {
+	if err := config.DB.Where("email = ? OR phone_number = ?", body.Email, body.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid email or password"})
 		return
 	}

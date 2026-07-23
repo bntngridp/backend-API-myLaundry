@@ -30,16 +30,18 @@ func SeedDatabase() {
 	// 1. Seed Admins First
 	log.Println("Seeding Admins...")
 	admin1 := models.User{
-		Username: "Admin Laundry Kesatu",
-		Email:    "admin@mylaundry.com",
-		Password: string(hashedPassword),
-		Role:     "admin",
+		Username:    "Admin Laundry Kesatu",
+		Email:       "admin@mylaundry.com",
+		PhoneNumber: "081234567890",
+		Password:    string(hashedPassword),
+		Role:        "admin",
 	}
 	admin2 := models.User{
-		Username: "Admin Laundry Kedua",
-		Email:    "admin2@mylaundry.com",
-		Password: string(hashedPassword),
-		Role:     "admin",
+		Username:    "Admin Laundry Kedua",
+		Email:       "admin2@mylaundry.com",
+		PhoneNumber: "081234567891",
+		Password:    string(hashedPassword),
+		Role:        "admin",
 	}
 	DB.Create(&admin1)
 	DB.Create(&admin2)
@@ -51,6 +53,7 @@ func SeedDatabase() {
 	courier1 := models.User{
 		Username:         "Kurir Bagus",
 		Email:            "courier@mylaundry.com",
+		PhoneNumber:      "081234567892",
 		Password:         string(hashedPassword),
 		Role:             "courier",
 		CreatedByAdminID: &admin1.ID,
@@ -58,6 +61,7 @@ func SeedDatabase() {
 	customer1 := models.User{
 		Username:         "Budi Customer",
 		Email:            "customer@mylaundry.com",
+		PhoneNumber:      "081234567893",
 		Password:         string(hashedPassword),
 		Role:             "customer",
 		CreatedByAdminID: &admin1.ID,
@@ -73,12 +77,15 @@ func SeedDatabase() {
 	}
 	for i, name := range courierNames {
 		email := fmt.Sprintf("courier2_%d@mylaundry.com", i+1)
+		phone := fmt.Sprintf("0812888800%02d", i+1)
 		if i == 0 {
 			email = "courier2@mylaundry.com" // keep the existing primary courier
+			phone = "081234567894"
 		}
 		couriersAdmin2 = append(couriersAdmin2, models.User{
 			Username:         name,
 			Email:            email,
+			PhoneNumber:      phone,
 			Password:         string(hashedPassword),
 			Role:             "courier",
 			CreatedByAdminID: &admin2.ID,
@@ -96,12 +103,15 @@ func SeedDatabase() {
 	}
 	for i, name := range customerNames {
 		email := fmt.Sprintf("customer2_%d@mylaundry.com", i+1)
+		phone := fmt.Sprintf("0812999900%02d", i+1)
 		if i == 0 {
 			email = "customer2@mylaundry.com" // keep the existing primary customer
+			phone = "081234567895"
 		}
 		customersAdmin2 = append(customersAdmin2, models.User{
 			Username:         name,
 			Email:            email,
+			PhoneNumber:      phone,
 			Password:         string(hashedPassword),
 			Role:             "customer",
 			CreatedByAdminID: &admin2.ID,
