@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -457,6 +458,80 @@ func GetMe(c *gin.Context) {
 			"username": user.Username,
 			"email":    user.Email,
 			"role":     user.Role,
+		},
+	})
+}
+
+func GoogleLogin(c *gin.Context) {
+	var body struct {
+		IDToken string `json:"id_token" form:"id_token"`
+		Role    string `json:"role" form:"role"`
+	}
+
+	if err := c.ShouldBind(&body); err != nil || body.IDToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID token required"})
+		return
+	}
+
+	// Verify ID Token against Google TokenInfo endpoint
+	resp, err := http.Get(fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", body.IDToken))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid Google token"})
+		return
+	}
+	defer resp.Body.Close()
+
+	var googleClaims struct {
+		Email         string `json:"email"`
+		Name          string `json:"name"`
+		EmailVerified string `json:"email_verified"`
+		Sub           string `json:"sub"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&googleClaims); err != nil || googleClaims.Email == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Failed to decode Google profile"})
+		return
+	}
+
+	role := body.Role
+	if role == "" {
+		role = "customer"
+	}
+
+	// Find or create user
+	var user models.User
+	if err := config.DB.Where("email = ?", googleClaims.Email).First(&user).Error; err != nil {
+		// User does not exist, create new user
+		username := googleClaims.Name
+		if username == "" {
+			username = googleClaims.Email
+		}
+		dummyPass, _ := bcrypt.GenerateFromPassword([]byte("google_oauth_"+googleClaims.Sub), bcrypt.DefaultCost)
+		user = models.User{
+			Username: username,
+			Email:    googleClaims.Email,
+			Password: string(dummyPass),
+			Role:     role,
+		}
+		if err := config.DB.Create(&user).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user account"})
+			return
+		}
+	}
+
+	// Generate JWT Token
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate session token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Google login successful!",
+		"code":    http.StatusOK,
+		"data": gin.H{
+			"token": token,
+			"role":  user.Role,
 		},
 	})
 }

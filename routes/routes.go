@@ -16,6 +16,7 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		authRoutes.POST("/register", controllers.Register)
 		authRoutes.POST("/login", controllers.Login)
+		authRoutes.POST("/google", controllers.GoogleLogin)
 		authRoutes.POST("/forgot-password", controllers.ForgotPassword)
 		authRoutes.POST("/reset-password", controllers.ResetPassword)
 		authRoutes.POST("/verify-otp", controllers.VerifyOTP)
