@@ -99,6 +99,13 @@ func SetupRoutes(router *gin.Engine) {
 		addressRoutes.DELETE("/:id", middlewares.AuthMiddleware(), addressController.DeleteAddress)
 	}
 
+	notificationRoutes := router.Group("api/notifications", middlewares.AuthMiddleware())
+	{
+		notificationRoutes.GET("/", controllers.GetNotifications)
+		notificationRoutes.PUT("/:id/read", controllers.MarkNotificationAsRead)
+		notificationRoutes.PUT("/read-all", controllers.MarkAllNotificationsAsRead)
+	}
+
 	// Serve swagger.json for the API UI
 	router.GET("/swagger.json", func(c *gin.Context) {
 		c.File("docs/swagger.json")
