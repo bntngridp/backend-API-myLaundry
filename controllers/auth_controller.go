@@ -473,22 +473,51 @@ func GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	// Verify ID Token against Google TokenInfo endpoint
-	resp, err := http.Get(fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", body.IDToken))
-	if err != nil || resp.StatusCode != http.StatusOK {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid Google token"})
-		return
-	}
-	defer resp.Body.Close()
-
 	var googleClaims struct {
 		Email         string `json:"email"`
 		Name          string `json:"name"`
 		EmailVerified string `json:"email_verified"`
 		Sub           string `json:"sub"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&googleClaims); err != nil || googleClaims.Email == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Failed to decode Google profile"})
+
+	// 1. Try id_token endpoint
+	resp, err := http.Get(fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?id_token=%s", body.IDToken))
+	if err == nil && resp.StatusCode == http.StatusOK {
+		json.NewDecoder(resp.Body).Decode(&googleClaims)
+		resp.Body.Close()
+	} else if resp != nil {
+		resp.Body.Close()
+	}
+
+	// 2. If email is empty, try access_token endpoint
+	if googleClaims.Email == "" {
+		resp, err = http.Get(fmt.Sprintf("https://oauth2.googleapis.com/tokeninfo?access_token=%s", body.IDToken))
+		if err == nil && resp.StatusCode == http.StatusOK {
+			json.NewDecoder(resp.Body).Decode(&googleClaims)
+			resp.Body.Close()
+		} else if resp != nil {
+			resp.Body.Close()
+		}
+	}
+
+	// 3. If email is still empty, try userinfo endpoint with Bearer token
+	if googleClaims.Email == "" {
+		req, errReq := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v3/userinfo", nil)
+		if errReq == nil {
+			req.Header.Set("Authorization", "Bearer "+body.IDToken)
+			client := &http.Client{Timeout: 10 * time.Second}
+			resp, err = client.Do(req)
+			if err == nil && resp.StatusCode == http.StatusOK {
+				json.NewDecoder(resp.Body).Decode(&googleClaims)
+				resp.Body.Close()
+			} else if resp != nil {
+				resp.Body.Close()
+			}
+		}
+	}
+
+	if googleClaims.Email == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid Google token"})
 		return
 	}
 
@@ -535,3 +564,4 @@ func GoogleLogin(c *gin.Context) {
 		},
 	})
 }
+
