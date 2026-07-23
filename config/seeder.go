@@ -251,12 +251,12 @@ func SeedDatabase() {
 	DB.Create(&orderDua)
 	DB.Create(&orderTiga)
 
-	// 6. Seed Promos
-	log.Println("Seeding Promos...")
+	// 6. Seed Promos (promosatu, promodua, promotiga)
+	log.Println("Seeding Promos (promosatu, promodua, promotiga)...")
 	futureExpiry := time.Now().AddDate(0, 1, 0) // 1 month from now
 	promos := []models.Promo{
 		{
-			Code:               "BersihTanpaPusing",
+			Code:               "promosatu",
 			Title:              "Diskon 30% Hemat Laundry",
 			Subtitle:           "Diskon hingga Rp 5.000 untuk semua layanan",
 			DiscountPercentage: 30,
@@ -266,7 +266,7 @@ func SeedDatabase() {
 			ExpiredAt:          &futureExpiry,
 		},
 		{
-			Code:               "CucianWangi",
+			Code:               "promodua",
 			Title:              "Diskon 50% Super Hemat",
 			Subtitle:           "Diskon hingga Rp 10.000 untuk cucian kiloan",
 			DiscountPercentage: 50,
@@ -276,7 +276,7 @@ func SeedDatabase() {
 			ExpiredAt:          &futureExpiry,
 		},
 		{
-			Code:               "MulaiLaundry",
+			Code:               "promotiga",
 			Title:              "Free Delivery Promo",
 			Subtitle:           "Khusus pengguna baru myLaundry",
 			DiscountPercentage: 100,

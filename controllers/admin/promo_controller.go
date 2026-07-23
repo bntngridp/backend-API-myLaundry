@@ -9,6 +9,7 @@ import (
 	"github.com/raihansyahrin/backend_laundry_app.git/config"
 	"github.com/raihansyahrin/backend_laundry_app.git/models"
 	"github.com/raihansyahrin/backend_laundry_app.git/response"
+	"github.com/raihansyahrin/backend_laundry_app.git/utils"
 )
 
 // parseTimeFlexible parses date strings in common web formats
@@ -34,14 +35,27 @@ func parseTimeFlexible(timeStr string) *time.Time {
 	return nil
 }
 
-// GetPromos fetches all active promos (or all promos for admin)
+// GetPromos fetches all promos for admin (active & inactive), or active-only for customers
 func GetPromos(c *gin.Context) {
 	var promos []models.Promo
 
-	role, exists := c.Get("role")
+	// Check if user is admin via context or Authorization header token
+	isAdmin := false
+	if role, exists := c.Get("role"); exists && role.(string) == "admin" {
+		isAdmin = true
+	} else {
+		authHeader := c.GetHeader("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+			if claims, err := utils.ValidateJWT(tokenStr); err == nil && claims.Role == "admin" {
+				isAdmin = true
+			}
+		}
+	}
+
 	query := config.DB.Order("created_at desc")
 
-	if !exists || role.(string) != "admin" {
+	if !isAdmin {
 		query = query.Where("is_active = ?", true)
 	}
 
@@ -58,7 +72,7 @@ func GetPromos(c *gin.Context) {
 	now := time.Now()
 	var validPromos []models.Promo
 	for _, p := range promos {
-		if !exists || role.(string) != "admin" {
+		if !isAdmin {
 			if p.ExpiredAt != nil && p.ExpiredAt.Before(now) {
 				continue
 			}
