@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/raihansyahrin/backend_laundry_app.git/models"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,7 @@ func SeedDatabase() {
 	DB.Exec("TRUNCATE TABLE services")
 	DB.Exec("TRUNCATE TABLE users")
 	DB.Exec("TRUNCATE TABLE login_histories")
+	DB.Exec("TRUNCATE TABLE promos")
 	DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
 
 	log.Println("All tables successfully wiped.")
@@ -354,6 +356,45 @@ func SeedDatabase() {
 		if err := DB.Create(&order).Error; err != nil {
 			log.Println("Failed to seed Admin 2 order:", err)
 		}
+	}
+
+	// 5. Seed Promos
+	log.Println("Seeding Promos...")
+	futureExpiry := time.Now().AddDate(0, 1, 0) // 1 month from now
+	promos := []models.Promo{
+		{
+			Code:               "BersihTanpaPusing",
+			Title:              "Diskon 30% Hemat Laundry",
+			Subtitle:           "Diskon hingga Rp 5.000 untuk semua layanan",
+			DiscountPercentage: 30,
+			MaxDiscountAmount:  5000,
+			MinOrderAmount:     15000,
+			IsActive:           true,
+			ExpiredAt:          &futureExpiry,
+		},
+		{
+			Code:               "CucianWangi",
+			Title:              "Diskon 50% Super Hemat",
+			Subtitle:           "Diskon hingga Rp 10.000 untuk cucian kiloan",
+			DiscountPercentage: 50,
+			MaxDiscountAmount:  10000,
+			MinOrderAmount:     25000,
+			IsActive:           true,
+			ExpiredAt:          &futureExpiry,
+		},
+		{
+			Code:               "MulaiLaundry",
+			Title:              "Free Delivery Promo",
+			Subtitle:           "Khusus pengguna baru myLaundry",
+			DiscountPercentage: 100,
+			MaxDiscountAmount:  10000,
+			MinOrderAmount:     10000,
+			IsActive:           true,
+			ExpiredAt:          &futureExpiry,
+		},
+	}
+	for _, p := range promos {
+		DB.Create(&p)
 	}
 
 	log.Println("Database fresh re-seeding completed.")

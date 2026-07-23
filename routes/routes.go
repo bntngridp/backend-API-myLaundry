@@ -24,6 +24,16 @@ func SetupRoutes(router *gin.Engine) {
 		authRoutes.GET("/login-history", middlewares.AuthMiddleware(), controllers.GetLoginHistory)
 	}
 
+	promoGroup := router.Group("api/promos")
+	{
+		promoGroup.GET("", admin_controllers.GetPromos)
+		promoGroup.GET("/", admin_controllers.GetPromos)
+		promoGroup.GET("/validate/:code", admin_controllers.ValidatePromo)
+		promoGroup.POST("", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.CreatePromo)
+		promoGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.UpdatePromo)
+		promoGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.DeletePromo)
+	}
+
 	userRoutes := router.Group("api/users")
 	userRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
 	{
