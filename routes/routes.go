@@ -21,6 +21,7 @@ func SetupRoutes(router *gin.Engine) {
 		authRoutes.POST("/reset-password", controllers.ResetPassword)
 		authRoutes.POST("/verify-otp", controllers.VerifyOTP)
 		authRoutes.GET("/me", middlewares.AuthMiddleware(), controllers.GetMe)
+		authRoutes.GET("/login-history", middlewares.AuthMiddleware(), controllers.GetLoginHistory)
 	}
 
 	userRoutes := router.Group("api/users")
@@ -36,17 +37,23 @@ func SetupRoutes(router *gin.Engine) {
 	customerGroup := router.Group("api/customers")
 	{
 		customerGroup.GET("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.GetCustomers)
-		customerGroup.GET("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.GetCustomer)
-		customerGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.UpdateCustomer)
-		customerGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.DeleteCustomer)
+		customerGroup.GET(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.GetCustomer)
+		customerGroup.PUT(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.UpdateCustomer)
+		customerGroup.DELETE(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.DeleteCustomer)
+
+		// Login history for customer: allow admin or the owning customer
+		customerGroup.GET(":id/login-history", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "customer"), customer_controller.GetCustomerLoginHistory)
 	}
 
 	courierGroup := router.Group("api/couriers")
 	{
 		courierGroup.GET("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCouriers)
-		courierGroup.GET("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCourier)
-		courierGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.UpdateCourier)
-		courierGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.DeleteCourier)
+		courierGroup.GET(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCourier)
+		courierGroup.PUT(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.UpdateCourier)
+		courierGroup.DELETE(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.DeleteCourier)
+
+		// Login history for courier: allow admin or the owning courier
+		courierGroup.GET(":id/login-history", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier"), courier_controllers.GetCourierLoginHistory)
 	}
 
 	adminGroup := router.Group("api/admins")

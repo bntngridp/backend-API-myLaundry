@@ -13,5 +13,6 @@ type User struct {
 	Role             string    `json:"role"` // "customer", "admin", "courier"
 	CreatedByAdminID *uint     `json:"created_by_admin_id"`
 	CreatedByAdmin    *User     `json:"created_by_admin" gorm:"foreignKey:CreatedByAdminID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Addresses        []Address `gorm:"foreignkey:CustomerID"`
+	Addresses        []Address    `gorm:"foreignkey:CustomerID"`
+	LoginHistories   []LoginHistory `gorm:"foreignKey:UserID"`
 }

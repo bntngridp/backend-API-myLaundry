@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/raihansyahrin/backend_laundry_app.git/config"
 	"github.com/raihansyahrin/backend_laundry_app.git/models"
+	"github.com/raihansyahrin/backend_laundry_app.git/response"
 	"github.com/raihansyahrin/backend_laundry_app.git/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -122,15 +123,29 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Login successful!",
-		"code":    http.StatusOK,
-		"data": gin.H{
-			"token": token,
-			"role":  user.Role,
-		},
-	})
+			// Record login history (only for customers and couriers, but we store for all roles)
+			ip := c.ClientIP()
+			ua := c.Request.UserAgent()
+			history := models.LoginHistory{
+				UserID:    user.ID,
+				Role:      user.Role,
+				IP:        ip,
+				UserAgent: ua,
+				Success:   true,
+				LoggedAt:  time.Now(),
+			}
+			// Best-effort insert; do not fail login if history insert fails
+			_ = config.DB.Create(&history).Error
+
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"message": "Login successful!",
+				"code":    http.StatusOK,
+				"data": gin.H{
+					"token": token,
+					"role":  user.Role,
+				},
+			})
 }
 
 func generateOTP() string {
@@ -554,14 +569,58 @@ func GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Google login successful!",
-		"code":    http.StatusOK,
-		"data": gin.H{
-			"token": token,
-			"role":  user.Role,
-		},
+			// Record login history for Google login
+			ip := c.ClientIP()
+			ua := c.Request.UserAgent()
+			history := models.LoginHistory{
+				UserID:    user.ID,
+				Role:      user.Role,
+				IP:        ip,
+				UserAgent: ua,
+				Success:   true,
+				LoggedAt:  time.Now(),
+			}
+			_ = config.DB.Create(&history).Error
+
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"message": "Google login successful!",
+				"code":    http.StatusOK,
+				"data": gin.H{
+					"token": token,
+					"role":  user.Role,
+				},
+			})
+}
+
+// GetLoginHistory retrieves the authenticated user's login history logs
+func GetLoginHistory(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, response.DefaultResponse{
+			Success: false,
+			Message: "Unauthorized access",
+			Code:    http.StatusUnauthorized,
+		})
+		return
+	}
+
+	var histories []models.LoginHistory
+	if err := config.DB.Where("user_id = ?", userID).Order("logged_at desc").Limit(20).Find(&histories).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, response.DefaultResponse{
+			Success: false,
+			Message: "Failed to retrieve login history",
+			Code:    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.DefaultResponse{
+		Success: true,
+		Message: "Successfully retrieved login history",
+		Code:    http.StatusOK,
+		Data:    histories,
 	})
 }
+
 
