@@ -38,6 +38,7 @@ func ConnectDatabase() {
 		&models.CourierWallet{},
 		&models.CourierCashDeposit{},
 		&models.CourierLocation{},
+		&models.ChatMessage{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)

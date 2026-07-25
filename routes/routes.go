@@ -157,6 +157,13 @@ func SetupRoutes(router *gin.Engine) {
 		trackingRoutes.GET("/order/:id", controllers.GetOrderLiveTracking)
 	}
 
+	chatRoutes := router.Group("api/chats/order/:id")
+	chatRoutes.Use(middlewares.AuthMiddleware())
+	{
+		chatRoutes.POST("", controllers.SendChatMessage)
+		chatRoutes.GET("", controllers.GetOrderChatMessages)
+	}
+
 	walletRoutes := router.Group("api/admin/financial")
 	walletRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
 	{
