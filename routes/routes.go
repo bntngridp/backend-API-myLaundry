@@ -34,6 +34,17 @@ func SetupRoutes(router *gin.Engine) {
 		promoGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.DeletePromo)
 	}
 
+	branchGroup := router.Group("api/branches")
+	{
+		branchGroup.GET("", admin_controllers.GetBranches)
+		branchGroup.GET("/", admin_controllers.GetBranches)
+		branchGroup.GET("/:id", admin_controllers.GetBranchByID)
+		branchGroup.POST("", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.CreateBranch)
+		branchGroup.POST("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.CreateBranch)
+		branchGroup.PUT("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.UpdateBranch)
+		branchGroup.DELETE("/:id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.DeleteBranch)
+	}
+
 	userRoutes := router.Group("api/users")
 	userRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
 	{
