@@ -61,6 +61,25 @@ func Register(c *gin.Context) {
 		role = "customer"
 	}
 
+	// Security: only an authenticated admin can create other admin accounts
+	if role == "admin" {
+		// /auth/register does not use AuthMiddleware, so we must manually validate the token
+		authHeader := c.GetHeader("Authorization")
+		isAdmin := false
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+			if tokenString != "" {
+				if claims, err := utils.ValidateJWT(tokenString); err == nil && claims.Role == "admin" {
+					isAdmin = true
+				}
+			}
+		}
+		if !isAdmin {
+			c.JSON(http.StatusForbidden, gin.H{"message": "Only admin can register a new admin account"})
+			return
+		}
+	}
+
 	phoneNumber := strings.TrimSpace(body.PhoneNumber)
 	if phoneNumber == "" {
 		phoneNumber = fmt.Sprintf("08%d", time.Now().UnixNano()%10000000000)
@@ -214,9 +233,15 @@ func ForgotPassword(c *gin.Context) {
 		return
 	}
 
+	cleanEmail := strings.TrimSpace(body.Email)
+	if cleanEmail == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Email address is required"})
+		return
+	}
+
 	// Verify if user exists
 	var user models.User
-	if err := config.DB.Where("email = ?", body.Email).First(&user).Error; err != nil {
+	if err := config.DB.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Email address not registered"})
 		return
 	}

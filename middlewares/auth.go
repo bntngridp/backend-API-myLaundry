@@ -50,7 +50,20 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		tokenString := strings.Split(authHeader, "Bearer ")[1]
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid authorization format, expected: Bearer <token>"})
+			c.Abort()
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		tokenString = strings.TrimSpace(tokenString)
+
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Authorization token is empty"})
+			c.Abort()
+			return
+		}
 
 		claims, err := utils.ValidateJWT(tokenString)
 		if err != nil {
