@@ -80,6 +80,7 @@ func SetupRoutes(router *gin.Engine) {
 		courierGroup.GET("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCouriers)
 		courierGroup.GET(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.GetCourier)
 		courierGroup.PUT(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.UpdateCourier)
+		courierGroup.PUT(":id/status", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.UpdateCourierStatus)
 		courierGroup.DELETE(":id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "courier", "couriers"), courier_controllers.DeleteCourier)
 
 		// Login history for courier: allow admin or the owning courier

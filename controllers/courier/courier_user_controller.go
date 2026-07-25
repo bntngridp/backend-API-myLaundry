@@ -44,9 +44,10 @@ func GetCouriers(c *gin.Context) {
 	var courierResponses []response.UserResponse
 	for _, courier := range couriers {
 		courierResponse := response.UserResponse{
-			ID:       courier.ID,
-			Username: courier.Username,
-			Email:    courier.Email,
+			ID:          courier.ID,
+			Username:    courier.Username,
+			Email:       courier.Email,
+			IsAvailable: courier.IsAvailable,
 		}
 		courierResponses = append(courierResponses, courierResponse)
 	}
@@ -70,9 +71,10 @@ func GetCourier(c *gin.Context) {
 	}
 
 	courierResponse := response.UserResponse{
-		ID:       courier.ID,
-		Username: courier.Username,
-		Email:    courier.Email,
+		ID:          courier.ID,
+		Username:    courier.Username,
+		Email:       courier.Email,
+		IsAvailable: courier.IsAvailable,
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -80,6 +82,37 @@ func GetCourier(c *gin.Context) {
 		"message": "Successfully retrieved courier profile",
 		"code":    http.StatusOK,
 		"data":    courierResponse,
+	})
+}
+
+// UpdateCourierStatus updates courier duty/availability status (Available vs Offline)
+func UpdateCourierStatus(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		IsAvailable bool `json:"is_available"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Format masukan tidak valid"})
+		return
+	}
+
+	var courier models.User
+	if err := config.DB.Where("role = ? AND id = ?", "courier", id).First(&courier).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "Kurir tidak ditemukan"})
+		return
+	}
+
+	courier.IsAvailable = body.IsAvailable
+	if err := config.DB.Save(&courier).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Gagal memperbarui status kurir"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":      true,
+		"message":      "Status keberadaan kurir berhasil diperbarui",
+		"is_available": courier.IsAvailable,
 	})
 }
 

@@ -11,6 +11,7 @@ type User struct {
 	PhoneNumber      string    `json:"phone_number" gorm:"unique"`
 	Password         string    `json:"password"`
 	Role             string    `json:"role"` // "customer", "admin", "courier"
+	IsAvailable      bool      `json:"is_available" gorm:"default:true"`
 	CreatedByAdminID *uint     `json:"created_by_admin_id"`
 	CreatedByAdmin    *User     `json:"created_by_admin" gorm:"foreignKey:CreatedByAdminID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Addresses        []Address    `gorm:"foreignkey:CustomerID"`
