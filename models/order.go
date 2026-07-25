@@ -9,6 +9,7 @@ type Order struct {
 	CustomerID uint    `json:"customer_id"`
 	CourierID  *uint   `json:"courier_id"`
 	AdminID    *uint   `json:"admin_id"`
+	BranchID   uint    `gorm:"default:1" json:"branch_id"`
 	ServiceID  uint    `json:"service_id"`
 	AddressID  uint    `json:"address_id"`
 	Weight     float64 `json:"weight,omitempty"`

@@ -20,6 +20,7 @@ func SeedDatabase() {
 	DB.Exec("TRUNCATE TABLE login_histories")
 	DB.Exec("TRUNCATE TABLE promos")
 	DB.Exec("TRUNCATE TABLE branches")
+	DB.Exec("TRUNCATE TABLE ratings")
 	DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
 
 	log.Println("All tables successfully wiped.")
