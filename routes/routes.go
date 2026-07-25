@@ -51,7 +51,7 @@ func SetupRoutes(router *gin.Engine) {
 		ratingGroup.POST("/", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("customer"), customer_controller.CreateRating)
 		ratingGroup.GET("/order/:order_id", customer_controller.GetOrderRating)
 		ratingGroup.GET("/branch/:branch_id", customer_controller.GetBranchRatings)
-		ratingGroup.GET("/courier/:courier_id", customer_controller.GetCourierRatings)
+		ratingGroup.GET("/courier/:courier_id", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin", "customer"), customer_controller.GetCourierRatings)
 	}
 
 	userRoutes := router.Group("api/users")
