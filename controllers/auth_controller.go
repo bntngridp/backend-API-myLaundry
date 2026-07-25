@@ -83,14 +83,17 @@ func Register(c *gin.Context) {
 
 	// Handle courier specific registration details
 	if role == "courier" {
-		var adminID uint
+		var adminID uint = 1
 		if body.EmployeeCode == "EBS-f4wD" || body.EmployeeCode == "2" || body.EmployeeCode == "admin2" || body.EmployeeCode == "EBS-admin2" {
 			adminID = 2
 		} else if body.EmployeeCode == "EBS-admin1" || body.EmployeeCode == "1" || body.EmployeeCode == "admin1" {
 			adminID = 1
 		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Kode Khusus Karyawan tidak valid"})
-			return
+			if reqUserID, exists := c.Get("user_id"); exists {
+				if uid, ok := reqUserID.(uint); ok {
+					adminID = uid
+				}
+			}
 		}
 		user.CreatedByAdminID = &adminID
 	}
