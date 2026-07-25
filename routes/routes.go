@@ -151,6 +151,12 @@ func SetupRoutes(router *gin.Engine) {
 		paymentRoutes.POST("/confirm-cash", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("courier", "admin"), controllers.ConfirmCashPayment)
 	}
 
+	trackingRoutes := router.Group("api/tracking")
+	{
+		trackingRoutes.POST("/courier-location", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("courier"), controllers.UpdateCourierLocation)
+		trackingRoutes.GET("/order/:id", controllers.GetOrderLiveTracking)
+	}
+
 	walletRoutes := router.Group("api/admin/financial")
 	walletRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
 	{
