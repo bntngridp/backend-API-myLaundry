@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 	"net/http"
 	"strings"
@@ -204,7 +205,10 @@ func ForgotPassword(c *gin.Context) {
 		// Check rate limit: 60 seconds cooldown between OTP requests
 		elapsed := time.Since(existingOTP.UpdatedAt)
 		if elapsed < 60*time.Second {
-			remainingSeconds := int(60 - elapsed.Seconds())
+			remainingSeconds := int(math.Ceil(60.0 - elapsed.Seconds()))
+			if remainingSeconds < 1 {
+				remainingSeconds = 1
+			}
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"success":           false,
 				"message":           fmt.Sprintf("Harap tunggu %d detik sebelum meminta kode OTP kembali.", remainingSeconds),
