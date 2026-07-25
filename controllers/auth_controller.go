@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -59,11 +60,16 @@ func Register(c *gin.Context) {
 		role = "customer"
 	}
 
+	phoneNumber := strings.TrimSpace(body.PhoneNumber)
+	if phoneNumber == "" {
+		phoneNumber = fmt.Sprintf("08%d", time.Now().UnixNano()%10000000000)
+	}
+
 	// Create user object
 	user := models.User{
 		Username:    body.Username,
 		Email:       body.Email,
-		PhoneNumber: body.PhoneNumber,
+		PhoneNumber: phoneNumber,
 		Password:    string(hash),
 		Role:        role,
 	}
