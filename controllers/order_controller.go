@@ -68,7 +68,7 @@ func GetOrders(c *gin.Context) {
 						query = query.Where("courier_id = ?", userIDUint)
 					}
 				} else if roleStr == "admin" {
-					query = query.Where("admin_id = ? OR admin_id IS NULL", userIDUint)
+					// All admins have complete visibility over all platform orders
 				}
 			}
 		}

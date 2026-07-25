@@ -24,7 +24,7 @@ func (sc *ServiceController) GetServices(c *gin.Context) {
 			roleStr, okRole := role.(string)
 			if okRole {
 				if roleStr == "admin" {
-					query = query.Where("admin_id = ?", userIDUint)
+					// All admins have visibility over all services
 				} else {
 					var loggedInUser models.User
 					if err := config.DB.First(&loggedInUser, userIDUint).Error; err == nil && loggedInUser.CreatedByAdminID != nil {
