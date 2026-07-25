@@ -166,11 +166,11 @@ func Login(c *gin.Context) {
 }
 
 func generateOTP() string {
-	nBig, err := rand.Int(rand.Reader, big.NewInt(9000))
+	nBig, err := rand.Int(rand.Reader, big.NewInt(900000))
 	if err != nil {
-		return "1234" // fallback
+		return "123456" // fallback 6-digit
 	}
-	return fmt.Sprintf("%04d", nBig.Int64()+1000)
+	return fmt.Sprintf("%06d", nBig.Int64()+100000)
 }
 
 func ForgotPassword(c *gin.Context) {
