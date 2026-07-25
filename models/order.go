@@ -14,9 +14,11 @@ type Order struct {
 	AddressID  uint    `json:"address_id"`
 	Weight     float64 `json:"weight,omitempty"`
 	Quantity   int     `json:"quantity,omitempty"` 
-	TotalPrice float64 `json:"total_price"`
-	Status     string  `json:"status"` 
-	Address    Address `json:"address" gorm:"foreignKey:AddressID"`
+	TotalPrice    float64 `json:"total_price"`
+	Status        string  `json:"status"` 
+	PaymentMethod string  `gorm:"default:'CASH'" json:"payment_method"`
+	PaymentStatus string  `gorm:"default:'UNPAID'" json:"payment_status"`
+	Address       Address `json:"address" gorm:"foreignKey:AddressID"`
 	Customer   User    `json:"customer" gorm:"foreignKey:CustomerID"`
 	Courier    User    `json:"courier" gorm:"foreignKey:CourierID"`
 	Admin      User    `json:"admin" gorm:"foreignKey:AdminID"`

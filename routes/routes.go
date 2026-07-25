@@ -144,6 +144,20 @@ func SetupRoutes(router *gin.Engine) {
 		notificationRoutes.PUT("/read-all", controllers.MarkAllNotificationsAsRead)
 	}
 
+	paymentRoutes := router.Group("api/payments")
+	{
+		paymentRoutes.POST("/snap-token", middlewares.AuthMiddleware(), controllers.CreateSnapTransaction)
+		paymentRoutes.POST("/notification", controllers.HandleMidtransNotification)
+		paymentRoutes.POST("/confirm-cash", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("courier", "admin"), controllers.ConfirmCashPayment)
+	}
+
+	walletRoutes := router.Group("api/admin/financial")
+	walletRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
+	{
+		walletRoutes.GET("/summary", admin_controllers.GetAdminFinancialSummary)
+		walletRoutes.POST("/confirm-deposit", admin_controllers.ConfirmCourierDeposit)
+	}
+
 	// Serve swagger.json for the API UI
 	router.GET("/swagger.json", func(c *gin.Context) {
 		c.File("docs/swagger.json")
