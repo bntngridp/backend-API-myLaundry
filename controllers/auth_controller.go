@@ -198,6 +198,17 @@ func ForgotPassword(c *gin.Context) {
 	var existingOTP models.PasswordResetOTP
 	err := config.DB.Where("email = ?", body.Email).First(&existingOTP).Error
 	if err == nil {
+		// Check rate limit: 60 seconds cooldown between OTP requests
+		elapsed := time.Since(existingOTP.UpdatedAt)
+		if elapsed < 60*time.Second {
+			remainingSeconds := int(60 - elapsed.Seconds())
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"success":           false,
+				"message":           fmt.Sprintf("Harap tunggu %d detik sebelum meminta kode OTP kembali.", remainingSeconds),
+				"remaining_seconds": remainingSeconds,
+			})
+			return
+		}
 		// Update existing record
 		existingOTP.OTP = otpCode
 		existingOTP.ExpiresAt = expiresAt
