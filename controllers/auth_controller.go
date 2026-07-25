@@ -531,10 +531,11 @@ func GetMe(c *gin.Context) {
 		"success": true,
 		"message": "User profile retrieved successfully",
 		"data": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
-			"role":     user.Role,
+			"id":           user.ID,
+			"username":     user.Username,
+			"email":        user.Email,
+			"role":         user.Role,
+			"is_available": user.IsAvailable,
 		},
 	})
 }
