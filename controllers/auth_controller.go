@@ -65,10 +65,17 @@ func Register(c *gin.Context) {
 		phoneNumber = fmt.Sprintf("08%d", time.Now().UnixNano()%10000000000)
 	}
 
+	// Check if email is already registered
+	var existingUser models.User
+	if err := config.DB.Where("email = ?", strings.TrimSpace(body.Email)).First(&existingUser).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Email sudah terdaftar, silakan gunakan email lain atau login"})
+		return
+	}
+
 	// Create user object
 	user := models.User{
 		Username:    body.Username,
-		Email:       body.Email,
+		Email:       strings.TrimSpace(body.Email),
 		PhoneNumber: phoneNumber,
 		Password:    string(hash),
 		Role:        role,
@@ -90,6 +97,10 @@ func Register(c *gin.Context) {
 
 	// Save user to database
 	if err := config.DB.Create(&user).Error; err != nil {
+		if strings.Contains(err.Error(), "1062") || strings.Contains(strings.ToLower(err.Error()), "duplicate") || strings.Contains(strings.ToLower(err.Error()), "unique") {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Email sudah terdaftar, silakan gunakan email lain atau login"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user"})
 		return
 	}
