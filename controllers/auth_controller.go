@@ -66,17 +66,39 @@ func Register(c *gin.Context) {
 		phoneNumber = fmt.Sprintf("08%d", time.Now().UnixNano()%10000000000)
 	}
 
-	// Check if email is already registered
-	var existingUser models.User
-	if err := config.DB.Where("email = ?", strings.TrimSpace(body.Email)).First(&existingUser).Error; err == nil {
+	// Check if email or phone number is already registered
+	cleanEmail := strings.TrimSpace(body.Email)
+	cleanPhone := strings.TrimSpace(body.PhoneNumber)
+
+	var emailExists bool
+	var phoneExists bool
+
+	var tempUser models.User
+	if cleanEmail != "" && config.DB.Where("email = ?", cleanEmail).First(&tempUser).Error == nil {
+		emailExists = true
+	}
+
+	if cleanPhone != "" && config.DB.Where("phone_number = ?", cleanPhone).First(&tempUser).Error == nil {
+		phoneExists = true
+	}
+
+	if emailExists && phoneExists {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Email dan nomor telepon sudah terdaftar, silakan gunakan email & nomor lain atau login"})
+		return
+	}
+	if emailExists {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Email sudah terdaftar, silakan gunakan email lain atau login"})
+		return
+	}
+	if phoneExists {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Nomor telepon sudah terdaftar, silakan gunakan nomor lain"})
 		return
 	}
 
 	// Create user object
 	user := models.User{
 		Username:    body.Username,
-		Email:       strings.TrimSpace(body.Email),
+		Email:       cleanEmail,
 		PhoneNumber: phoneNumber,
 		Password:    string(hash),
 		Role:        role,
@@ -101,7 +123,12 @@ func Register(c *gin.Context) {
 
 	// Save user to database
 	if err := config.DB.Create(&user).Error; err != nil {
-		if strings.Contains(err.Error(), "1062") || strings.Contains(strings.ToLower(err.Error()), "duplicate") || strings.Contains(strings.ToLower(err.Error()), "unique") {
+		errStr := strings.ToLower(err.Error())
+		if strings.Contains(errStr, "1062") || strings.Contains(errStr, "duplicate") || strings.Contains(errStr, "unique") {
+			if strings.Contains(errStr, "phone_number") || strings.Contains(errStr, "phone") {
+				c.JSON(http.StatusBadRequest, gin.H{"message": "Nomor telepon sudah terdaftar, silakan gunakan nomor lain"})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Email sudah terdaftar, silakan gunakan email lain atau login"})
 			return
 		}
