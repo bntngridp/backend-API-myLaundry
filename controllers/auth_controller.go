@@ -166,6 +166,7 @@ func Login(c *gin.Context) {
 	var body struct {
 		Email    string `json:"email" form:"email"`
 		Password string `json:"password" form:"password"`
+		Role     string `json:"role" form:"role"` // Expected role e.g. "courier", "customer", "admin"
 	}
 
 	if err := c.ShouldBind(&body); err != nil {
@@ -184,35 +185,44 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Security: Validate expected role if specified
+	expectedRole := strings.TrimSpace(strings.ToLower(body.Role))
+	if expectedRole != "" && strings.ToLower(user.Role) != expectedRole {
+		c.JSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("Akses ditolak: Akun Anda terdaftar sebagai %s, tidak dapat masuk ke aplikasi %s.", user.Role, expectedRole),
+		})
+		return
+	}
+
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Role) // Tambahkan role ke token
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate token"})
 		return
 	}
 
-			// Record login history (only for customers and couriers, but we store for all roles)
-			ip := c.ClientIP()
-			ua := c.Request.UserAgent()
-			history := models.LoginHistory{
-				UserID:    user.ID,
-				Role:      user.Role,
-				IP:        ip,
-				UserAgent: ua,
-				Success:   true,
-				LoggedAt:  time.Now(),
-			}
-			// Best-effort insert; do not fail login if history insert fails
-			_ = config.DB.Create(&history).Error
+	// Record login history
+	ip := c.ClientIP()
+	ua := c.Request.UserAgent()
+	history := models.LoginHistory{
+		UserID:    user.ID,
+		Role:      user.Role,
+		IP:        ip,
+		UserAgent: ua,
+		Success:   true,
+		LoggedAt:  time.Now(),
+	}
+	_ = config.DB.Create(&history).Error
 
-			c.JSON(http.StatusOK, gin.H{
-				"success": true,
-				"message": "Login successful!",
-				"code":    http.StatusOK,
-				"data": gin.H{
-					"token": token,
-					"role":  user.Role,
-				},
-			})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Login successful!",
+		"code":    http.StatusOK,
+		"data": gin.H{
+			"token": token,
+			"role":  user.Role,
+		},
+	})
 }
 
 func generateOTP() string {
@@ -632,7 +642,7 @@ func GoogleLogin(c *gin.Context) {
 	// Find or create user
 	var user models.User
 	if err := config.DB.Where("email = ?", googleClaims.Email).First(&user).Error; err != nil {
-		// User does not exist, create new user
+		// User does not exist, create new user with requested role
 		username := googleClaims.Name
 		if username == "" {
 			username = googleClaims.Email
@@ -646,6 +656,15 @@ func GoogleLogin(c *gin.Context) {
 		}
 		if err := config.DB.Create(&user).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create user account"})
+			return
+		}
+	} else {
+		// User exists: enforce role matching
+		if role != "" && strings.ToLower(user.Role) != strings.ToLower(role) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": fmt.Sprintf("Akses ditolak: Akun Google Anda terdaftar sebagai %s, tidak dapat masuk ke aplikasi %s.", user.Role, role),
+			})
 			return
 		}
 	}
