@@ -17,6 +17,47 @@ type SendChatRequest struct {
 	MessageType string `json:"message_type"` // TEXT, DELIVERY_PROOF
 }
 
+// ChatMessageDTO is a clean response DTO — no nested order object
+type ChatMessageDTO struct {
+	ID          uint      `json:"id"`
+	OrderID     uint      `json:"order_id"`
+	SenderID    uint      `json:"sender_id"`
+	SenderRole  string    `json:"sender_role"`
+	Message     string    `json:"message"`
+	ImageURL    string    `json:"image_url"`
+	MessageType string    `json:"message_type"`
+	SentAt      time.Time `json:"sent_at"`
+	Sender      *SenderDTO `json:"sender,omitempty"`
+}
+
+type SenderDTO struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+}
+
+func toChatMessageDTO(msg models.ChatMessage) ChatMessageDTO {
+	dto := ChatMessageDTO{
+		ID:          msg.ID,
+		OrderID:     msg.OrderID,
+		SenderID:    msg.SenderID,
+		SenderRole:  msg.SenderRole,
+		Message:     msg.Message,
+		ImageURL:    msg.ImageURL,
+		MessageType: msg.MessageType,
+		SentAt:      msg.SentAt,
+	}
+	// Only include sender if we have a valid user
+	if msg.Sender.ID > 0 {
+		dto.Sender = &SenderDTO{
+			ID:       msg.Sender.ID,
+			Username: msg.Sender.Username,
+			Role:     msg.Sender.Role,
+		}
+	}
+	return dto
+}
+
 // SendChatMessage - Send a chat message or Photo Proof of Delivery for an order
 func SendChatMessage(c *gin.Context) {
 	orderIDParam := c.Param("id")
@@ -72,6 +113,7 @@ func SendChatMessage(c *gin.Context) {
 		senderRole = "admin"
 	}
 
+	// Verify order exists
 	var order models.Order
 	if err := config.DB.First(&order, orderID).Error; err != nil {
 		c.JSON(http.StatusNotFound, response.DefaultResponse{
@@ -117,14 +159,15 @@ func SendChatMessage(c *gin.Context) {
 		config.DB.Save(&order)
 	}
 
-	// Preload Sender info for response
-	config.DB.Preload("Sender").First(&chatMsg, chatMsg.ID)
+	// Preload Sender info using a fresh query so GORM works correctly
+	var savedMsg models.ChatMessage
+	config.DB.Preload("Sender").First(&savedMsg, chatMsg.ID)
 
 	c.JSON(http.StatusOK, response.DefaultResponse{
 		Code:    http.StatusOK,
 		Success: true,
 		Message: "Pesan chat / Bukti pengiriman berhasil dikirim",
-		Data:    chatMsg,
+		Data:    toChatMessageDTO(savedMsg),
 	})
 }
 
@@ -142,12 +185,20 @@ func GetOrderChatMessages(c *gin.Context) {
 	}
 
 	var messages []models.ChatMessage
-	config.DB.Preload("Sender").Where("order_id = ?", orderID).Order("id asc").Find(&messages)
+	config.DB.Preload("Sender").
+		Where("order_id = ?", orderID).
+		Order("id asc").
+		Find(&messages)
+
+	dtos := make([]ChatMessageDTO, len(messages))
+	for i, msg := range messages {
+		dtos[i] = toChatMessageDTO(msg)
+	}
 
 	c.JSON(http.StatusOK, response.DefaultResponse{
 		Code:    http.StatusOK,
 		Success: true,
 		Message: "Histori chat pesanan berhasil diambil",
-		Data:    messages,
+		Data:    dtos,
 	})
 }

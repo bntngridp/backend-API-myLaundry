@@ -164,6 +164,8 @@ func SetupRoutes(router *gin.Engine) {
 		chatRoutes.GET("", controllers.GetOrderChatMessages)
 	}
 
+	router.GET("api/ws/call", controllers.HandleCallSignaling)
+
 	walletRoutes := router.Group("api/admin/financial")
 	walletRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
 	{
