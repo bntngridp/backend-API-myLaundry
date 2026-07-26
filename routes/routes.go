@@ -171,6 +171,13 @@ func SetupRoutes(router *gin.Engine) {
 		walletRoutes.POST("/confirm-deposit", admin_controllers.ConfirmCourierDeposit)
 	}
 
+	adminRatingRoutes := router.Group("api/admin/ratings")
+	adminRatingRoutes.Use(middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"))
+	{
+		adminRatingRoutes.GET("", admin_controllers.GetAllRatings)
+		adminRatingRoutes.POST("/:id/reply", admin_controllers.ReplyRating)
+	}
+
 	// Serve swagger.json for the API UI
 	router.GET("/swagger.json", func(c *gin.Context) {
 		c.File("docs/swagger.json")

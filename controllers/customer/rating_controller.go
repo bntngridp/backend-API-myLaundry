@@ -41,7 +41,15 @@ func CreateRating(c *gin.Context) {
 		return
 	}
 
-	customerID := uint(userIDVal.(float64))
+	var customerID uint
+	switch v := userIDVal.(type) {
+	case uint:
+		customerID = v
+	case float64:
+		customerID = uint(v)
+	case int:
+		customerID = uint(v)
+	}
 
 	// Find the order
 	var order models.Order
@@ -54,8 +62,8 @@ func CreateRating(c *gin.Context) {
 		return
 	}
 
-	// Ensure order is completed / done
-	if order.Status != "done" && order.Status != "completed" {
+	// Ensure order is completed / done / selesai
+	if order.Status != "done" && order.Status != "completed" && order.Status != "selesai" {
 		c.JSON(http.StatusBadRequest, response.DefaultResponse{
 			Success: false,
 			Message: "Rating hanya dapat diberikan pada pesanan yang telah selesai",
