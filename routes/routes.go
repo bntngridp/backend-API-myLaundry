@@ -115,7 +115,9 @@ func SetupRoutes(router *gin.Engine) {
 
 		//Admin
 		orderRoutes.POST("/order-complete", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.OrderComplete)
+		orderRoutes.POST("/admin-set-weight", middlewares.AuthMiddleware(), middlewares.RoleMiddleware("admin"), admin_controllers.AdminSetWeight)
 	}
+
 
 	serviceRoutes := router.Group("api/services", middlewares.AuthMiddleware())
 	{
