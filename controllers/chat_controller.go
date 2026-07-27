@@ -126,12 +126,28 @@ func SendChatMessage(c *gin.Context) {
 
 	messageType := req.MessageType
 	if messageType == "" {
-		messageType = "TEXT"
+		if req.ImageURL != "" {
+			if len(req.ImageURL) > 10 && req.ImageURL[:10] == "data:video" {
+				messageType = "VIDEO"
+			} else {
+				messageType = "IMAGE"
+			}
+		} else {
+			messageType = "TEXT"
+		}
 	}
 
 	msgText := req.Message
-	if msgText == "" && messageType == "DELIVERY_PROOF" {
-		msgText = "📷 Bukti Pengiriman: Laundry telah digantung di lokasi (pagar / depan kamar)."
+	if msgText == "" {
+		if messageType == "DELIVERY_PROOF" {
+			msgText = "📷 Bukti Pengiriman: Laundry telah digantung di lokasi."
+		} else if messageType == "IMAGE" {
+			msgText = "📷 Foto Pesanan"
+		} else if messageType == "VIDEO" {
+			msgText = "📹 Video Pesanan"
+		} else if messageType == "AUDIO" {
+			msgText = "🎙️ Pesan Suara"
+		}
 	}
 
 	chatMsg := models.ChatMessage{
