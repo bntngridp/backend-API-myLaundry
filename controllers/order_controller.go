@@ -46,7 +46,13 @@ func GetOrders(c *gin.Context) {
 	role, existsRole := c.Get("role")
 	loggedInUserID, existsUser := c.Get("user_id")
 
-	query := config.DB.Preload("Customer").Preload("Courier").Preload("Admin").Preload("Service").Preload("Address")
+	query := config.DB.Preload("Customer").Preload("Courier").Preload("Admin").Preload("Service").Preload("Address").Preload("Branch")
+
+	// Allow filtering by specific branch ID if provided
+	branchIDParam := c.Query("branch_id")
+	if branchIDParam != "" {
+		query = query.Where("branch_id = ?", branchIDParam)
+	}
 
 	if existsRole && existsUser {
 		userIDUint, ok := loggedInUserID.(uint)
@@ -94,6 +100,17 @@ func GetOrders(c *gin.Context) {
 			TotalPrice: order.TotalPrice,
 			Weight:     order.Weight,
 			Quantity:   order.Quantity,
+			BranchID:   order.BranchID,
+			Branch: response.BranchResponse{
+				ID:         order.Branch.ID,
+				Name:       order.Branch.Name,
+				Address:    order.Branch.Address,
+				Latitude:   order.Branch.Latitude,
+				Longitude:  order.Branch.Longitude,
+				Rating:     order.Branch.Rating,
+				ImageURL:   order.Branch.ImageURL,
+				IsActive:   order.Branch.IsActive,
+			},
 			Customer: response.UserResponse{
 				ID:        order.Customer.ID,
 				Username:  order.Customer.Username,

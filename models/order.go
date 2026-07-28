@@ -23,4 +23,5 @@ type Order struct {
 	Courier    User    `json:"courier" gorm:"foreignKey:CourierID"`
 	Admin      User    `json:"admin" gorm:"foreignKey:AdminID"`
 	Service    Service `json:"service" gorm:"foreignKey:ServiceID"`
+	Branch     Branch  `json:"branch" gorm:"foreignKey:BranchID"`
 }

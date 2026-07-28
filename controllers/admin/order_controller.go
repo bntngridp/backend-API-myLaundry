@@ -324,8 +324,14 @@ func GetDashboardStats(c *gin.Context) {
 		return
 	}
 
+	query := config.DB.Model(&models.Order{})
+	branchIDParam := c.Query("branch_id")
+	if branchIDParam != "" {
+		query = query.Where("branch_id = ?", branchIDParam)
+	}
+
 	var orders []models.Order
-	if err := config.DB.Find(&orders).Error; err != nil {
+	if err := query.Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, response.DefaultResponse{
 			Code:    http.StatusInternalServerError,
 			Success: false,

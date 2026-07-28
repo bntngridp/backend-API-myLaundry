@@ -214,7 +214,42 @@ func SeedDatabase() {
 	DB.Create(&addrDua)
 	DB.Create(&addrTiga)
 
-	// 5. Seed Orders
+	// 5. Seed Branches
+	log.Println("Seeding Branches...")
+	branches := []models.Branch{
+		{
+			Name:      "myLaundry Bojongsoang",
+			Address:   "Jl. Raya Bojongsoang No. 12",
+			Latitude:  -6.9740,
+			Longitude: 107.6303,
+			Rating:    4.8,
+			ImageURL:  "https://picsum.photos/seed/laundry1/300/200",
+			IsActive:  true,
+		},
+		{
+			Name:      "myLaundry Sukapura",
+			Address:   "Jl. Sukapura Raya No. 45",
+			Latitude:  -6.9775,
+			Longitude: 107.6335,
+			Rating:    4.6,
+			ImageURL:  "https://picsum.photos/seed/laundry2/300/200",
+			IsActive:  true,
+		},
+		{
+			Name:      "myLaundry Kiaracondong",
+			Address:   "Jl. Stasiun Kiaracondong No. 8",
+			Latitude:  -6.9400,
+			Longitude: 107.6450,
+			Rating:    4.7,
+			ImageURL:  "https://picsum.photos/seed/laundry3/300/200",
+			IsActive:  true,
+		},
+	}
+	for _, b := range branches {
+		DB.Create(&b)
+	}
+
+	// 6. Seed Orders (order1, order2, order3)
 	log.Println("Seeding orders...")
 	var service1 models.Service
 	DB.First(&service1)
@@ -228,6 +263,7 @@ func SeedDatabase() {
 		TotalPrice: 3.5 * service1.Price,
 		Status:     "diproses",
 		AdminID:    &adminSatu.ID,
+		BranchID:   1,
 	}
 	orderDua := models.Order{
 		CustomerID: customerDua.ID,
@@ -238,6 +274,7 @@ func SeedDatabase() {
 		TotalPrice: 5.0 * service1.Price,
 		Status:     "penjemputan",
 		AdminID:    &adminDua.ID,
+		BranchID:   2,
 	}
 	orderTiga := models.Order{
 		CustomerID: customerTiga.ID,
@@ -248,12 +285,13 @@ func SeedDatabase() {
 		TotalPrice: 2.0 * service1.Price,
 		Status:     "selesai",
 		AdminID:    &adminTiga.ID,
+		BranchID:   1,
 	}
 	DB.Create(&orderSatu)
 	DB.Create(&orderDua)
 	DB.Create(&orderTiga)
 
-	// 6. Seed Promos (promosatu, promodua, promotiga)
+	// 7. Seed Promos (promosatu, promodua, promotiga)
 	log.Println("Seeding Promos (promosatu, promodua, promotiga)...")
 	futureExpiry := time.Now().AddDate(0, 1, 0) // 1 month from now
 	promos := []models.Promo{
@@ -290,41 +328,6 @@ func SeedDatabase() {
 	}
 	for _, p := range promos {
 		DB.Create(&p)
-	}
-
-	// 7. Seed Branches
-	log.Println("Seeding Branches...")
-	branches := []models.Branch{
-		{
-			Name:      "myLaundry Bojongsoang",
-			Address:   "Jl. Raya Bojongsoang No. 12",
-			Latitude:  -6.9740,
-			Longitude: 107.6303,
-			Rating:    4.8,
-			ImageURL:  "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&q=80&w=300",
-			IsActive:  true,
-		},
-		{
-			Name:      "myLaundry Sukapura",
-			Address:   "Jl. Sukapura Raya No. 45",
-			Latitude:  -6.9775,
-			Longitude: 107.6335,
-			Rating:    4.6,
-			ImageURL:  "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&q=80&w=300",
-			IsActive:  true,
-		},
-		{
-			Name:      "myLaundry Kiaracondong",
-			Address:   "Jl. Stasiun Kiaracondong No. 8",
-			Latitude:  -6.9400,
-			Longitude: 107.6450,
-			Rating:    4.7,
-			ImageURL:  "https://images.unsplash.com/photo-1604335399105-a0c585fd810e?auto=format&fit=crop&q=80&w=300",
-			IsActive:  true,
-		},
-	}
-	for _, b := range branches {
-		DB.Create(&b)
 	}
 
 	log.Println("Database fresh re-seeding completed.")
