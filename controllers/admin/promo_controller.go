@@ -141,7 +141,7 @@ func CreatePromo(c *gin.Context) {
 		ExpiredAt          string  `json:"expired_at" form:"expired_at"`
 	}
 
-	if err := c.ShouldBind(&body); err != nil {
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, response.DefaultResponse{
 			Success: false,
 			Message: "Input promo tidak valid",
