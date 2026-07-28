@@ -3,6 +3,7 @@ package admin_controllers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,8 @@ import (
 // and auto-calculate total price based on service pricing.
 func AdminSetWeight(c *gin.Context) {
 	var body struct {
-		OrderID  uint    `json:"order_id" form:"order_id" binding:"required"`
+		ID       uint    `json:"id" form:"id"`
+		OrderID  uint    `json:"order_id" form:"order_id"`
 		Weight   float64 `json:"weight,omitempty" form:"weight"`
 		Quantity int     `json:"quantity,omitempty" form:"quantity"`
 	}
@@ -24,10 +26,15 @@ func AdminSetWeight(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.DefaultResponse{
 			Code:    http.StatusBadRequest,
 			Success: false,
-			Message: "Invalid input format: order_id is required",
+			Message: "Invalid input format",
 			Data:    nil,
 		})
 		return
+	}
+
+	targetID := body.OrderID
+	if targetID == 0 {
+		targetID = body.ID
 	}
 
 	// Validate admin role
@@ -55,7 +62,7 @@ func AdminSetWeight(c *gin.Context) {
 
 	// Fetch the order with service details
 	var order models.Order
-	if err := config.DB.Preload("Service").Preload("Customer").Preload("Courier").Preload("Address").First(&order, body.OrderID).Error; err != nil {
+	if err := config.DB.Preload("Service").Preload("Customer").Preload("Courier").Preload("Address").First(&order, targetID).Error; err != nil {
 		c.JSON(http.StatusNotFound, response.DefaultResponse{
 			Code:    http.StatusNotFound,
 			Success: false,
@@ -66,12 +73,15 @@ func AdminSetWeight(c *gin.Context) {
 	}
 
 	// Prevent re-setting weight if order is already past this stage
+	currentStatusLower := strings.ToLower(order.Status)
 	validStatuses := map[string]bool{
 		"waiting for courier approval": true,
 		"kurir on the way":             true,
 		"in progress":                  true,
+		"diproses":                     true,
+		"penjemputan":                  true,
 	}
-	if !validStatuses[order.Status] {
+	if !validStatuses[currentStatusLower] {
 		c.JSON(http.StatusConflict, response.DefaultResponse{
 			Code:    http.StatusConflict,
 			Success: false,
