@@ -7,7 +7,7 @@ type Rating struct {
 	OrderID      string     `gorm:"type:varchar(50);not null;unique" json:"order_id"`
 	CustomerID   uint       `gorm:"not null" json:"customer_id"`
 	Customer     User       `json:"customer,omitempty" gorm:"foreignKey:CustomerID"`
-	CourierID    uint       `gorm:"not null" json:"courier_id"`
+	CourierID    *uint      `json:"courier_id,omitempty"`
 	Courier      User       `json:"courier,omitempty" gorm:"foreignKey:CourierID"`
 	BranchID     uint       `gorm:"not null" json:"branch_id"`
 	Branch       Branch     `json:"branch,omitempty" gorm:"foreignKey:BranchID"`

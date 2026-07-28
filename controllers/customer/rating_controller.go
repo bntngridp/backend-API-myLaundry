@@ -89,8 +89,8 @@ func CreateRating(c *gin.Context) {
 		branchID = 1
 	}
 
-	var courierID uint = 0
-	if order.CourierID != nil {
+	var courierID uint = 4
+	if order.CourierID != nil && *order.CourierID > 0 {
 		courierID = *order.CourierID
 	}
 
@@ -98,7 +98,7 @@ func CreateRating(c *gin.Context) {
 	ratingRecord := models.Rating{
 		OrderID:      input.OrderID,
 		CustomerID:   customerID,
-		CourierID:    courierID,
+		CourierID:    &courierID,
 		BranchID:     branchID,
 		CourierScore: math.Max(1.0, math.Min(5.0, input.CourierScore)),
 		BranchScore:  math.Max(1.0, math.Min(5.0, input.BranchScore)),
@@ -131,7 +131,8 @@ func CreateRating(c *gin.Context) {
 	}
 
 	// 2. SYSTEMATIC RECALCULATION: Courier Average Rating
-	if courierID > 0 {
+	if order.CourierID != nil && *order.CourierID > 0 {
+		courierID := *order.CourierID
 		var courierAvg struct {
 			AvgScore float64
 			Count    int64
