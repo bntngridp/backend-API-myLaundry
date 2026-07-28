@@ -16,15 +16,7 @@ func AcceptOrder(c *gin.Context) {
 		CourierID uint `json:"courier_id" form:"courier_id"`
 	}
 
-	if err := c.ShouldBind(&body); err != nil {
-		c.JSON(http.StatusBadRequest, response.DefaultResponse{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Message: "Invalid input format",
-			Data:    nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&body)
 
 	var order models.Order
 	if err := config.DB.Preload("Service").Preload("Courier").Preload("Customer").Preload("Admin").Preload("Address").First(&order, orderID).Error; err != nil {
@@ -152,6 +144,7 @@ func AcceptOrder(c *gin.Context) {
 
 func CourierArrived(c *gin.Context) {
 	var body struct {
+		ID         uint    `json:"id" form:"id"`
 		OrderID    uint    `json:"order_id" form:"order_id"`
 		Weight     float64 `json:"weight,omitempty" form:"weight"`
 		Quantity   int     `json:"quantity,omitempty" form:"quantity"`
@@ -163,8 +156,13 @@ func CourierArrived(c *gin.Context) {
 		return
 	}
 
+	targetID := body.OrderID
+	if targetID == 0 {
+		targetID = body.ID
+	}
+
 	var order models.Order
-	if err := config.DB.First(&order, body.OrderID).Error; err != nil {
+	if err := config.DB.First(&order, targetID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid order ID"})
 		return
 	}
@@ -268,6 +266,7 @@ func CourierArrived(c *gin.Context) {
 
 func AcceptCashPayment(c *gin.Context) {
 	var body struct {
+		ID      uint `json:"id" form:"id"`
 		OrderID uint `json:"order_id" form:"order_id"`
 	}
 
@@ -281,9 +280,14 @@ func AcceptCashPayment(c *gin.Context) {
 		return
 	}
 
+	targetID := body.OrderID
+	if targetID == 0 {
+		targetID = body.ID
+	}
+
 	var order models.Order
 	// Pastikan untuk preload kolom yang diperlukan
-	if err := config.DB.Preload("Service").Preload("Courier").Preload("Customer").Preload("Address").First(&order, body.OrderID).Error; err != nil {
+	if err := config.DB.Preload("Service").Preload("Courier").Preload("Customer").Preload("Address").First(&order, targetID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, response.DefaultResponse{
 			Code:    http.StatusBadRequest,
 			Success: false,
@@ -429,6 +433,7 @@ func AcceptCashPayment(c *gin.Context) {
 
 func OrderDelivery(c *gin.Context) {
 	var body struct {
+		ID      uint `json:"id" form:"id"`
 		OrderID uint `json:"order_id" form:"order_id"`
 	}
 
@@ -442,8 +447,13 @@ func OrderDelivery(c *gin.Context) {
 		return
 	}
 
+	targetID := body.OrderID
+	if targetID == 0 {
+		targetID = body.ID
+	}
+
 	var order models.Order
-	if err := config.DB.Preload("Service").Preload("Courier").Preload("Customer").Preload("Admin").Preload("Address").First(&order, body.OrderID).Error; err != nil {
+	if err := config.DB.Preload("Service").Preload("Courier").Preload("Customer").Preload("Admin").Preload("Address").First(&order, targetID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, response.DefaultResponse{
 			Code:    http.StatusBadRequest,
 			Success: false,
